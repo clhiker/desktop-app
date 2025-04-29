@@ -4,18 +4,18 @@ require.config({
 });
 */
 (function() {
-    var plugins = Config.plugins || [];
-    if(plugins.length == 0) { 
+    const plugins = Config.plugins || [];
+    if(plugins.length === 0) {
         initPage();
         return;
     }
-    var pluginPaths = [];
-    for(var i = 0; i < plugins.length; ++i) {
+    const pluginPaths = [];
+    for(let i = 0; i < plugins.length; ++i) {
         pluginPaths.push('public/plugins/' + plugins[i] + '/plugin');
     }
     
     require(pluginPaths, function() {
-        var ps = arguments;
+        const ps = arguments;
         // open前
         for(var i = 0; i < ps.length; ++i) {
             var plugin = ps[i];
@@ -29,8 +29,8 @@ require.config({
         // initOpen();
         initPage(function() { 
             // open后
-            for(var i = 0; i < ps.length; ++i) {
-                var plugin = ps[i];
+            for(let i = 0; i < ps.length; ++i) {
+                const plugin = ps[i];
                 plugin['onOpenAfter'] && plugin['onOpenAfter'].call(plugin);
             }
         });

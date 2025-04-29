@@ -1,36 +1,38 @@
-'use strict';
+const fs = require('fs');
+const path = require('path');
+const gulp = require('gulp');
+const log = require('gulplog');
+const less = require('gulp-less');
+const cleanCSS = require('gulp-clean-css');
 
-var fs = require('fs')
-var path = require('path')
-var gulp = require('gulp')
-var gutil = require('gulp-util')
-var less = require('gulp-less');
-var cleanCSS = require('gulp-clean-css');
+const styleDir = '../public/themes';
+const styleDir2 = '../public/css';
 
-var styleDir = '../public/themes';
-var styleDir2 = '../public/css';
-
-// 解析less
-gulp.task('less', function() {
-    gulp.src(styleDir + '/**/*.less')
+// 核心任务：LESS编译与压缩
+function processLess() {
+    return gulp.src([`${styleDir}/**/*.less`, `${styleDir2}/**/*.less`])
         .pipe(less())
-        .pipe(cleanCSS({compatibility: 'ie8', processImportFrom: ['!icon/iconfont.css', '!inhope-icon/style.css']}))
-        .pipe(gulp.dest(styleDir))
-        .pipe(gulp.dest(styleDir));
+        .on('error', log.error) // 添加错误监听[1,7](@ref)
+        .pipe(cleanCSS({
+            compatibility: 'ie8',
+            processImportFrom: ['!icon/iconfont.css', '!inhope-icon/style.css']
+        }))
+        .pipe(gulp.dest(file => file.base)) // 动态输出到源目录[2](@ref)
+        .on('end', () => log.info('LESS编译完成'));
+}
 
-    gulp.src(styleDir2 + '/**/*.less')
-        .pipe(less())
-        .pipe(cleanCSS({compatibility: 'ie8', processImportFrom: ['!icon/iconfont.css', '!inhope-icon/style.css']}))
-        .pipe(gulp.dest(styleDir2))
-        .pipe(gulp.dest(styleDir2));
+// 开发监视任务
+function watchFiles() {
+    gulp.watch([`${styleDir}/**/*.less`, `${styleDir2}/**/*.less`], processLess);
+}
 
-    gutil.log(gutil.colors.green('less ok'));
-});
+// 新版任务组合方式[1,6,8](@ref)
+const dev = gulp.series(
+    processLess,      // 先执行编译
+    watchFiles        // 再启动监听
+);
 
-// 开发服务
-gulp.task('dev', ['less'], function() {
-    gulp.watch(styleDir + '/**/*.less', ['less']);
-    gulp.watch(styleDir2 + '/**/*.less', ['less']);
-});
-
-gulp.task('default', ['dev']);
+// 新版导出方式[3,6](@ref)
+exports.less = processLess;
+exports.dev = dev;
+exports.default = dev; // 默认任务指向开发模式

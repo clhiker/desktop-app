@@ -1,20 +1,20 @@
-var async = require('async');
-var fs = require('fs');
+const async = require('async');
+const fs = require('fs');
 
-var db = require('./db');
-var File = require('./file');
-var Evt = require('./evt');
-var User = require('./user');
-var Notebook = require('./notebook');
+const db = require('./db');
+const File = require('./file');
+const Evt = require('./evt');
+const User = require('./user');
+const Notebook = require('./notebook');
 // var Tag = require('./tag');
 // var Api = require('./api');
-var Common = require('./common');
-var Web = require('./web');
+const Common = require('./common');
+const Web = require('./web');
 
 // var Notes = db.notes;
 
-var Api = null; // require('./api')
-var Tag = null;
+let Api = null; // require('./api')
+let Tag = null;
 
 function log(o) {
 	console.trace(o);
@@ -41,17 +41,17 @@ type NoteOrContent struct {
 */
 
 // 笔记服务
-var Note = {
+const Note = {
 	// 更新笔记
-	updateNoteOrContent: function(noteOrContent, callback, needAddToHistory) {
-		var me = this;
+	updateNoteOrContent: function (noteOrContent, callback, needAddToHistory) {
+		const me = this;
 
 		// Web.alertWeb(process.type); // render
 
-		var userId = User.getCurActiveUserId();
+		const userId = User.getCurActiveUserId();
 		noteOrContent['UserId'] = userId;
 
-		var date = new Date();
+		const date = new Date();
 		if (!Common.isValidDate(noteOrContent.UpdatedTime)) {
 			noteOrContent.UpdatedTime = date;
 		}
@@ -61,11 +61,11 @@ var Note = {
 
 		// 为什么不以noteOrContent.IsNew来判断是否是新建还是更新?
 		// 怕前端重复发请求, 保险起见
-		me.getNote(noteOrContent.NoteId, function(dbNote) {
+		me.getNote(noteOrContent.NoteId, function (dbNote) {
 			// 新建的
 			if (!dbNote) {
 				// 新建笔记, IsNew还是保存着
-				if(noteOrContent.IsNew) {
+				if (noteOrContent.IsNew) {
 					if (!Common.isValidDate(noteOrContent.CreatedTime)) {
 						noteOrContent.CreatedTime = date;
 					}
@@ -74,7 +74,7 @@ var Note = {
 					noteOrContent['LocalIsNew'] = true;
 
 					db.notes.insert(noteOrContent, function (err, newDoc) {   // Callback is optional
-						if(err) {
+						if (err) {
 							console.log(err);
 							callback && callback(false);
 						} else {
@@ -88,47 +88,46 @@ var Note = {
 							me.addNoteHistory(noteOrContent.NoteId, noteOrContent.Content);
 						}
 					});
-				}
-				else {
+				} else {
 					callback && callback(false);
 				}
 			}
 			// 更新
 			else {
-				var updateFields = ['Desc', 'ImgSrc', 'Title', 'Tags', 'Content'];
-				var updates = {};
-				var needUpdate = false;
-				for(var i in updateFields) {
-					var field = updateFields[i];
-					if(field in noteOrContent) {
+				const updateFields = ['Desc', 'ImgSrc', 'Title', 'Tags', 'Content'];
+				const updates = {};
+				let needUpdate = false;
+				for (let i in updateFields) {
+					const field = updateFields[i];
+					if (field in noteOrContent) {
 						updates[field] = noteOrContent[field];
 						needUpdate = true;
 					}
 				}
-				
-				if(needUpdate) {
-					var isDirty = false;
+
+				if (needUpdate) {
+					let isDirty = false;
 					// 只有title, Content, Tags修改了才算是IsDirty
-					if('Content' in updates && dbNote['Content'] != updates['Content']) {
+					if ('Content' in updates && dbNote['Content'] !== updates['Content']) {
 						isDirty = true;
 						// console.error(' content not same');
 						// ContentIsDirty 才会发Content
 						updates['ContentIsDirty'] = true;
 
-					} else if('Title' in updates && dbNote['Title'] != updates['Title']) {
+					} else if ('Title' in updates && dbNote['Title'] !== updates['Title']) {
 						isDirty = true;
 						// console.error(' title not same');
-					} else if('Tags' in updates) {
-						var dbTags = dbNote['Tags'] || [];
-						var nowTags = updates['Tags'] || [];
-						if(dbTags.join(',') != nowTags.join(',')) {
+					} else if ('Tags' in updates) {
+						const dbTags = dbNote['Tags'] || [];
+						const nowTags = updates['Tags'] || [];
+						if (dbTags.join(',') !== nowTags.join(',')) {
 							isDirty = true;
 							// console.error(' tag not same');
 						}
 					}
 
 					// 没有任何修改
-					if(!isDirty) {
+					if (!isDirty) {
 						console.log('没有任何修改, 不保存');
 						return callback && callback(dbNote);
 					}
@@ -136,22 +135,22 @@ var Note = {
 					updates['IsDirty'] = isDirty;
 
 					updates['LocalIsDelete'] = false;
-					
-					if(isDirty) {
+
+					if (isDirty) {
 						updates.UpdatedTime = date;
 					}
 
 					// console.log('finally update:');
 					// console.log(updates);
 
-					// Set an existing field's value 
-					db.notes.update({NoteId: noteOrContent.NoteId}, { $set: updates }, {}, function (err, numReplaced) { 
-						if(err) {
+					// Set an existing field's value
+					db.notes.update({NoteId: noteOrContent.NoteId}, {$set: updates}, {}, function (err, numReplaced) {
+						if (err) {
 							callback && callback(false);
 						} else {
 							callback && callback(noteOrContent);
 
-							if('Content' in updates) {
+							if ('Content' in updates) {
 
 								// 需要添加到历史记录中才加
 								if (needAddToHistory) {
@@ -160,8 +159,7 @@ var Note = {
 							}
 						}
 					});
-				}
-				else {
+				} else {
 					callback && callback(false);
 				}
 			}
@@ -169,10 +167,10 @@ var Note = {
 	},
 
 	// 公开/取消为博客
-	setNote2Blog: function(noteIds, isBlog, callback) {
-		var me = this;
-		var ok = false;
-		async.eachSeries(noteIds, function(noteId, cb) {
+	setNote2Blog: function (noteIds, isBlog, callback) {
+		const me = this;
+		let ok = false;
+		async.eachSeries(noteIds, function (noteId, cb) {
 			me._setNote2Blog(noteId, isBlog, function (ret) {
 				if (ret) {
 					ok = true;
@@ -184,15 +182,20 @@ var Note = {
 		});
 	},
 
-	_setNote2Blog: function(noteId, isBlog, callback) {
-		var me = this;
-		me.getNote(noteId, function(note) {
-			if(note) {
-				if(note.IsBlog == isBlog) {
+	_setNote2Blog: function (noteId, isBlog, callback) {
+		const me = this;
+		me.getNote(noteId, function (note) {
+			if (note) {
+				if (note.IsBlog === isBlog) {
 					return callback && callback(true);
 				}
 				// 更新, 设置isDirty
-				db.notes.update({_id: note._id}, { $set: {IsBlog: isBlog, IsDirty: true} }, {}, function (err, numReplaced) { 
+				db.notes.update({_id: note._id}, {
+					$set: {
+						IsBlog: isBlog,
+						IsDirty: true
+					}
+				}, {}, function (err, numReplaced) {
 					return callback && callback(true);
 				});
 			} else {
@@ -209,39 +212,43 @@ var Note = {
 		Histories []EachHistory `Histories`
 	}
 	 */
-	addNoteHistory: function(noteId, content, callback) {
-		var me = this;
+	addNoteHistory: function (noteId, content, callback) {
+		const me = this;
 		db.noteHistories.loadDB(function (ok) {
 			if (!ok) {
 				callback && callback(false);
 				return;
 			}
 			// 先判断是否存在, 不存在则新建之
-			db.noteHistories.findOne({_id: noteId}, function(err, history) {
-				var now = new Date();
+			db.noteHistories.findOne({_id: noteId}, function (err, history) {
+				const now = new Date();
 				// 新建之
-				if(!history) {
-					db.noteHistories.insert({_id: noteId, Histories: [{Content: content, "UpdatedTime": now}], "UpdatedTime": now}, function () {
+				if (!history) {
+					db.noteHistories.insert({
+						_id: noteId,
+						Histories: [{Content: content, "UpdatedTime": now}],
+						"UpdatedTime": now
+					}, function () {
 						callback && callback(true);
 					});
 				}
 				// 更新之
 				else {
-					var histories = history.Histories;
+					const histories = history.Histories;
 					// 如果与前一个内容一样, 则不加入历史中
 					if (histories
 						&& histories[histories.length - 1].Content
-						&& histories[histories.length - 1].Content == content) {
+						&& histories[histories.length - 1].Content === content) {
 						return (callback && callback(true));
 					}
 
 					histories.push({Content: content, UpdatedTime: now});
 
 					// 不能多了, 多了有麻烦, 20个最多
-					var max = 20;
-					var len = histories.length;
+					const max = 20;
+					const len = histories.length;
 					if (len > max) {
-						for (var i = 0; i < len - max; ++i) {
+						for (let i = 0; i < len - max; ++i) {
 							histories.shift();
 						}
 					}
@@ -260,27 +267,25 @@ var Note = {
 	},
 
 	// 获取笔记历史记录
-	getNoteHistories: function(noteId, callback) {
-		var me = this;
+	getNoteHistories: function (noteId, callback) {
+		const me = this;
 		db.noteHistories.loadDB(function (ok) {
 			if (!ok) {
 				callback(false);
 				return;
 			}
-			db.noteHistories.findOne({_id: noteId}, function(err, doc) {
-				if(err || !doc) {
+			db.noteHistories.findOne({_id: noteId}, function (err, doc) {
+				if (err || !doc) {
 					callback([]);
-				}
-				else {
-					var histories = [];
-					for(var i = doc.Histories.length - 1; i >= 0; --i) {
-						var history = doc.Histories[i];
-						var content, updatedTime;
+				} else {
+					const histories = [];
+					for (let i = doc.Histories.length - 1; i >= 0; --i) {
+						const history = doc.Histories[i];
+						let content, updatedTime;
 						if (typeof history == 'object') {
 							content = history.Content;
 							updatedTime = history.UpdatedTime;
-						}
-						else {
+						} else {
 							content = history;
 							updatedTime = doc.UpdatedTime || new Date();
 						}
@@ -293,42 +298,42 @@ var Note = {
 	},
 
 	// 获取笔记列表
-	getNotes: function(notebookId, callback) {
-		var me = this;
+	getNotes: function (notebookId, callback) {
+		const me = this;
 		me._getNotes(notebookId, false, false, callback);
 	},
 	// 获取trash笔记
-	getTrashNotes: function(callback) {
-		var me = this;
+	getTrashNotes: function (callback) {
+		const me = this;
 		me._getNotes('', true, false, callback);
 	},
-	getStarNotes: function(callback) {
-		var me = this;
+	getStarNotes: function (callback) {
+		const me = this;
 		me._getNotes('', false, true, callback);
 	},
-	_getNotes: function(notebookId, isTrash, isStar, callback) {
-		var userId = User.getCurActiveUserId();
-		var query = {
+	_getNotes: function (notebookId, isTrash, isStar, callback) {
+		const userId = User.getCurActiveUserId();
+		const query = {
 			UserId: userId,
 			// 现在还不明确为什么会有IsDeleted的笔记
-			$or:[
+			$or: [
 				{IsDeleted: {$exists: false}},
 				{IsDeleted: false}
 			],
 			IsTrash: false,
 			LocalIsDelete: false, // 未删除的
 		};
-		if(isStar) {
+		if (isStar) {
 			query['Star'] = true;
 		}
-		if(notebookId) {
+		if (notebookId) {
 			query['NotebookId'] = notebookId;
 		}
-		if(isTrash) {
+		if (isTrash) {
 			query['IsTrash'] = true;
 		}
-		db.notes.find(query).sort({'UpdatedTime': -1}).exec(function(err, notes) {
-			if(err) {
+		db.notes.find(query).sort({'UpdatedTime': -1}).exec(function (err, notes) {
+			if (err) {
 				log(err);
 				return callback && callback(false);
 			}
@@ -336,11 +341,16 @@ var Note = {
 		});
 	},
 
-	searchNote: function(key, callback) {
-		var reg = new RegExp(key, 'i');
-		var userId = User.getCurActiveUserId();
-		db.notes.find({UserId: userId, IsTrash: false, LocalIsDelete: false, $or: [{Title: reg}, {Content: reg}]}).sort({'UpdatedTime': -1}).exec(function(err, notes) {
-			if(!err && notes) {
+	searchNote: function (key, callback) {
+		const reg = new RegExp(key, 'i');
+		const userId = User.getCurActiveUserId();
+		db.notes.find({
+			UserId: userId,
+			IsTrash: false,
+			LocalIsDelete: false,
+			$or: [{Title: reg}, {Content: reg}]
+		}).sort({'UpdatedTime': -1}).exec(function (err, notes) {
+			if (!err && notes) {
 				console.log('search ' + key + ' result: ' + notes.length);
 				callback(notes);
 			} else {
@@ -349,10 +359,15 @@ var Note = {
 		});
 	},
 
-	searchNoteByTag: function(tag, callback) {
-		var userId = User.getCurActiveUserId();
-		db.notes.find({UserId: userId, IsTrash: false, LocalIsDelete: false, Tags: {$in: [tag]}}).sort({'UpdatedTime': -1}).exec(function(err, notes) {
-			if(!err && notes) {
+	searchNoteByTag: function (tag, callback) {
+		const userId = User.getCurActiveUserId();
+		db.notes.find({
+			UserId: userId,
+			IsTrash: false,
+			LocalIsDelete: false,
+			Tags: {$in: [tag]}
+		}).sort({'UpdatedTime': -1}).exec(function (err, notes) {
+			if (!err && notes) {
 				console.log('search by tag: ' + tag + ' result: ' + notes.length);
 				callback(notes);
 			} else {
@@ -361,21 +376,21 @@ var Note = {
 		});
 	},
 
-	clearTrash: function(callback) {
-		var me = this;
-		var userId = User.getCurActiveUserId();
+	clearTrash: function (callback) {
+		const me = this;
+		const userId = User.getCurActiveUserId();
 		db.notes.update(
-			{UserId: userId, IsTrash: true}, 
-			{$set: {LocalIsDelete: true, IsDirty: true}}, 
-			{multi: true}, 
-			function(err, n) {
+			{UserId: userId, IsTrash: true},
+			{$set: {LocalIsDelete: true, IsDirty: true}},
+			{multi: true},
+			function (err, n) {
 				// Web.alertWeb(n);
 				callback && callback();
-		});
+			});
 	},
 
-	deleteNote: function(noteIds, callback) {
-		var me = this;
+	deleteNote: function (noteIds, callback) {
+		const me = this;
 		async.eachSeries(noteIds, function (noteId, cb) {
 			me._deleteNote(noteId, function () {
 				cb();
@@ -385,10 +400,10 @@ var Note = {
 		});
 	},
 
-	_deleteNote: function(noteId, callback) {
-		var me = this;
-		me.getNote(noteId, function(note) {
-			if(!note) {
+	_deleteNote: function (noteId, callback) {
+		const me = this;
+		me.getNote(noteId, function (note) {
+			if (!note) {
 				callback(false);
 			}
 
@@ -399,8 +414,8 @@ var Note = {
 			}
 
 			// {multi: true},
-			db.notes.update({NoteId: noteId}, {$set: {IsTrash: true, IsDirty: true}}, {multi: true}, function(err, n) {
-				if(err || !n) {
+			db.notes.update({NoteId: noteId}, {$set: {IsTrash: true, IsDirty: true}}, {multi: true}, function (err, n) {
+				if (err || !n) {
 					callback(false);
 				} else {
 					callback(true);
@@ -413,14 +428,14 @@ var Note = {
 
 	// sync时调用
 	// 是新的, 又是deleted的, 则删除之
-	deleteLocalNote: function(noteId, callback) {
-		var me = this;
-		this.getNote(noteId, function(note) {
+	deleteLocalNote: function (noteId, callback) {
+		const me = this;
+		this.getNote(noteId, function (note) {
 			if (!note) {
 				callback && callback();
 				return;
 			}
-			db.notes.remove({NoteId: noteId}, function() {
+			db.notes.remove({NoteId: noteId}, function () {
 				me.deleteNoteAllOthers(note);
 				callback && callback();
 			});
@@ -435,7 +450,7 @@ var Note = {
 		if (!note) {
 			return;
 		}
-		var me = this;
+		const me = this;
 		// 删除图片
 		me.deleteImages(note);
 		// 删除附件
@@ -445,13 +460,13 @@ var Note = {
 	},
 
 	// 彻底删除笔记, 如果有tags, 则需要更新tags's count
-	deleteTrash: function(note, callback) {
-		var me = this;
-		if(note) {
+	deleteTrash: function (note, callback) {
+		const me = this;
+		if (note) {
 			// 如果是本地用户, 则直接删除
-			if(User.isLocal()) {
-				db.notes.remove({_id: note._id}, {multi: true}, function(err, n) {
-					if(n) {
+			if (User.isLocal()) {
+				db.notes.remove({_id: note._id}, {multi: true}, function (err, n) {
+					if (n) {
 						me.deleteNoteAllOthers(note);
 						// 如果有tags, 则重新更新tags' count
 						me.updateTagCount(note.Tags);
@@ -460,12 +475,11 @@ var Note = {
 					}
 					callback(false);
 				});
-			}
-			else {
+			} else {
 				note.LocalIsDelete = true;
 				note.IsDirty = true;
-				db.notes.update({_id: note._id}, {$set: {IsDirty: true, LocalIsDelete: true}}, function(err, n) {
-					if(n) {
+				db.notes.update({_id: note._id}, {$set: {IsDirty: true, LocalIsDelete: true}}, function (err, n) {
+					if (n) {
 						me.deleteNoteAllOthers(note);
 						me.updateTagCount(note.Tags);
 						callback(true);
@@ -481,27 +495,35 @@ var Note = {
 
 	// 移动note
 	// 重新统计另一个notebookId的笔记数
-	moveNote: function(noteIds, notebookId, callback) {
-		var me = this;
+	moveNote: function (noteIds, notebookId, callback) {
+		const me = this;
 		if (Common.isEmpty(noteIds)) {
 			callback(false);
 			return;
 		}
 
-		var preNotebookIds = {};
-		async.eachSeries(noteIds, function(noteId, cb) {
-			me.getNote(noteId, function(note) {
-				if(note) {
+		const preNotebookIds = {};
+		async.eachSeries(noteIds, function (noteId, cb) {
+			me.getNote(noteId, function (note) {
+				if (note) {
 					// var to = !note.Star;
 					// 是原笔记本
-					var preNotebookId = note.NotebookId;
-					if (preNotebookId == notebookId && !note.IsTrash) {
+					const preNotebookId = note.NotebookId;
+					if (preNotebookId === notebookId && !note.IsTrash) {
 						cb();
 						return;
 					}
 					preNotebookIds[preNotebookId] = true;
 					note.NotebookId = notebookId;
-					db.notes.update({_id: note._id}, {$set: {IsDirty: true, NotebookId: notebookId, IsTrash: false, LocalIsDelete: false, UpdatedTime: new Date()}}, function(err, n) {
+					db.notes.update({_id: note._id}, {
+						$set: {
+							IsDirty: true,
+							NotebookId: notebookId,
+							IsTrash: false,
+							LocalIsDelete: false,
+							UpdatedTime: new Date()
+						}
+					}, function (err, n) {
 						cb();
 					});
 				} else {
@@ -511,7 +533,7 @@ var Note = {
 
 		}, function () {
 			// 重新统计
-			for (var i in preNotebookIds) {
+			for (let i in preNotebookIds) {
 				Notebook.reCountNotebookNumberNotes(i);
 			}
 			if (!preNotebookIds[notebookId]) {
@@ -523,27 +545,27 @@ var Note = {
 	},
 
 	// 加星或取消
-	star: function(noteId, callback) {
-		var me = this;
-		me.getNote(noteId, function(note) {
-			if(note) {
-				var to = !note.Star;
+	star: function (noteId, callback) {
+		const me = this;
+		me.getNote(noteId, function (note) {
+			if (note) {
+				const to = !note.Star;
 				db.notes.update({_id: note._id}, {$set: {Star: to, UpdatedTime: new Date()}});
 				callback(true, to);
 			}
 		});
 	},
 
-	conflictIsFixed: function(noteId) {
-		var me = this;
+	conflictIsFixed: function (noteId) {
+		const me = this;
 		db.notes.update({NoteId: noteId}, {$set: {ConflictNoteId: ""}});
 	},
 
 	// 笔记本下是否有笔记
-	hasNotes: function(notebookId, callback) {
-		db.notes.count({NotebookId: notebookId, IsTrash: false, LocalIsDelete: false}, function(err, n) {
+	hasNotes: function (notebookId, callback) {
+		db.notes.count({NotebookId: notebookId, IsTrash: false, LocalIsDelete: false}, function (err, n) {
 			console.log(n);
-			if(err || n > 0) {
+			if (err || n > 0) {
 				return callback(true);
 			}
 			callback(false);
@@ -551,10 +573,10 @@ var Note = {
 	},
 
 	// 得到笔记
-	getNote: function(noteId, callback) {
-		var me = this;
-		db.notes.findOne({NoteId: noteId}, function(err, doc) {
-			if(err || !doc) {
+	getNote: function (noteId, callback) {
+		const me = this;
+		db.notes.findOne({NoteId: noteId}, function (err, doc) {
+			if (err || !doc) {
 				log('不存在');
 				callback && callback(false);
 			} else {
@@ -564,61 +586,68 @@ var Note = {
 	},
 
 	// 服务器上的数据到本地
-	fixNoteContent: function(content) {
-		if(!content) {
+	fixNoteContent: function (content) {
+		if (!content) {
 			return content;
 		}
 		// https, http都行
-		var url = Evt.leanoteUrl.replace('https', 'https*');
+		const url = Evt.leanoteUrl.replace('https', 'https*');
 
 		// http://leanote.com/file/outputImage?fileId=54f9079f38f4115c0200001b
-		var reg0 = new RegExp(url + '/file/outputImage', 'g');
+		const reg0 = new RegExp(url + '/file/outputImage', 'g');
 		content = content.replace(reg0, Evt.getImageLocalUrlPrefix());
 
-		var reg = new RegExp(url + '/api/file/getImage', 'g');
+		const reg = new RegExp(url + '/api/file/getImage', 'g');
 		content = content.replace(reg, Evt.getImageLocalUrlPrefix());
 
-		var reg2 = new RegExp(url + '/api/file/getAttach', 'g');
+		const reg2 = new RegExp(url + '/api/file/getAttach', 'g');
 		content = content.replace(reg2, Evt.getAttachLocalUrlPrefix());
 
-		var reg3 = new RegExp(url + '/attach/download?attachId', 'g');
+		const reg3 = new RegExp(url + '/attach/download?attachId', 'g');
 		content = content.replace(reg3, Evt.getAttachLocalUrlPrefix() + '?fileId');
 
 		// 无用
 		// api/file/getAllAttachs?noteId=xxxxxxxxx, 这里的noteId是服务器上的noteId啊
-		var reg4 = new RegExp(url + '/api/file/getAllAttachs', 'g');
+		const reg4 = new RegExp(url + '/api/file/getAllAttachs', 'g');
 		content = content.replace(reg4, Evt.getAllAttachsLocalUrlPrefix());
 
 		return content;
 	},
 
 	// 将本地的url改下, 发送数据到服务器上
-	fixNoteContentForSend: function(content) {
-		if(!content) {
+	fixNoteContentForSend: function (content) {
+		if (!content) {
 			return content;
 		}
 
 		// console.log(Evt.localUrl + '/api/file/getImage');
 		// console.log(content);
-		var reg = new RegExp(Evt.getImageLocalUrlPrefix(), 'g');
+		const reg = new RegExp(Evt.getImageLocalUrlPrefix(), 'g');
 		content = content.replace(reg, Evt.leanoteUrl + '/api/file/getImage');
 
-		var reg2 = new RegExp(Evt.getAttachLocalUrlPrefix(), 'g');
+		const reg2 = new RegExp(Evt.getAttachLocalUrlPrefix(), 'g');
 		content = content.replace(reg2, Evt.leanoteUrl + '/api/file/getAttach');
 
-		var reg3 = new RegExp(Evt.getAllAttachsLocalUrlPrefix(), 'g');
+		const reg3 = new RegExp(Evt.getAllAttachsLocalUrlPrefix(), 'g');
 		content = content.replace(reg3, Evt.leanoteUrl + '/api/file/getAllAttachs');
 
 		return content;
 	},
 
 	// 远程修改本地内容
-	updateNoteContentForce: function(noteId, content, callback) {
-		var me = this;
+	updateNoteContentForce: function (noteId, content, callback) {
+		const me = this;
 		// 修复内容, 修改图片, 附件链接为本地链接
 		content = me.fixNoteContent(content);
-		db.notes.update({NoteId: noteId}, { $set: {Err: '', Content: content, InitSync: false, IsContentDirty: false} }, {}, function (err, numReplaced) { 
-			if(err) {
+		db.notes.update({NoteId: noteId}, {
+			$set: {
+				Err: '',
+				Content: content,
+				InitSync: false,
+				IsContentDirty: false
+			}
+		}, {}, function (err, numReplaced) {
+			if (err) {
 				log(err);
 				callback && callback(false);
 			} else {
@@ -633,7 +662,7 @@ var Note = {
 	// sync调用, 用于判断是否真的有冲突
 	// 从服务器上获取内容
 	getNoteContentFromServer: function (serverNoteId, callback) {
-		var me = this;
+		const me = this;
 		if (!serverNoteId) {
 			callback(false);
 			return;
@@ -641,10 +670,10 @@ var Note = {
 		if (!Api) {
 			Api = require('./api');
 		}
-		Api.getNoteContent(serverNoteId, function(noteContent) {
+		Api.getNoteContent(serverNoteId, function (noteContent) {
 			// 同步到本地
-			if(Common.isOk(noteContent)) {
-				var content = me.fixNoteContent(noteContent.Content);
+			if (Common.isOk(noteContent)) {
+				const content = me.fixNoteContent(noteContent.Content);
 				callback(content);
 			} else {
 				callback(false);
@@ -656,8 +685,8 @@ var Note = {
 	// noteId是本地Id
 	inSyncContent: {}, // 正在同步中的
 	inSyncTimes: {}, // 10次就要再尝试了
-	getNoteContent: function(noteId, callback) {
-		var me = this;
+	getNoteContent: function (noteId, callback) {
+		const me = this;
 		// console.trace('getNoteContent------' + noteId);
 		// 如果是正在sync的话, 返回
 		/*
@@ -671,65 +700,65 @@ var Note = {
 			me.inSyncTimes[noteId] = 0
 		}
 		me.inSyncTimes[noteId]++;
-		if(me.inSyncTimes[noteId] >= 5) {
+		if (me.inSyncTimes[noteId] >= 5) {
 			return callback && callback(false);
 		}
 
-		me.getNote(noteId, function(note) {
-			
-			if(!Common.isOk(note)) {
+		me.getNote(noteId, function (note) {
+
+			if (!Common.isOk(note)) {
 				me.inSyncContent[noteId] = false;
 				console.log('not ok');
 				console.log(note);
 				callback && callback(false);
 			} else {
 				// 如果笔记是刚同步过来的, 那么内容要重新获取
-				if(note.InitSync) {
+				if (note.InitSync) {
 					console.log('need load from server');
 
-					if(!Api) {
+					if (!Api) {
 						Api = require('./api')
 					}
 
-					var serverNoteId = note.ServerNoteId;
+					const serverNoteId = note.ServerNoteId;
 
 					// 远程获取
 					// me.getServerNoteIdByNoteId(noteId, function(serverNoteId) {
-						if(!serverNoteId) {
-							console.error(noteId + ' getServerNoteIdByNoteId error');
-							me.inSyncContent[noteId] = false;
-							return callback && callback(false);
-						}
+					if (!serverNoteId) {
+						console.error(noteId + ' getServerNoteIdByNoteId error');
+						me.inSyncContent[noteId] = false;
+						return callback && callback(false);
+					}
 
-						Api.getNoteContent(serverNoteId, function(noteContent, ret) {
-							me.inSyncContent[noteId] = false;
+					Api.getNoteContent(serverNoteId, function (noteContent, ret) {
+						me.inSyncContent[noteId] = false;
 
-							// 同步到本地
-							if(Common.isOk(noteContent)) {
-								me.updateNoteContentForce(noteId, noteContent.Content, function(content) {
-									noteContent.Content = content;
-									noteContent.NoteId = noteId;
-									callback && callback(noteContent);
-								});
-							} else {
-								// 没有登录或者需要升级
-								try {
-									if (ret.Ok === false) { // {"Ok":false,"Msg":"NOTLOGIN"}
-										console.error(ret)
-										return callback && callback(false)
-									}
-								} catch(e) {
+						// 同步到本地
+						if (Common.isOk(noteContent)) {
+							me.updateNoteContentForce(noteId, noteContent.Content, function (content) {
+								noteContent.Content = content;
+								noteContent.NoteId = noteId;
+								callback && callback(noteContent);
+							});
+						} else {
+							// 没有登录或者需要升级
+							try {
+								if (ret.Ok === false) { // {"Ok":false,"Msg":"NOTLOGIN"}
+									console.error(ret)
+									return callback && callback(false)
 								}
-								console.error(noteId + ' api.getNoteContent error');
-
-								// 这里, 可能太多的要同步了
-								setTimeout(function() {
-									me.getNoteContent(noteId, callback);
-								}, 500);
-
-								// callback && callback(false);
+							} catch (e) {
 							}
-						});
+							console.error(noteId + ' api.getNoteContent error');
+
+							// 这里, 可能太多的要同步了
+							setTimeout(function () {
+								me.getNoteContent(noteId, callback);
+							}, 500);
+
+							// callback && callback(false);
+						}
+					});
 
 					// });
 				} else {
@@ -743,18 +772,18 @@ var Note = {
 	},
 
 	//----------------
-	// 同步 
+	// 同步
 	//----------------
 
-	getNoteByServerNoteId: function(noteId, callback) {
-		var me = this;
-		db.notes.find({ServerNoteId: noteId}, function(err, doc) {
+	getNoteByServerNoteId: function (noteId, callback) {
+		const me = this;
+		db.notes.find({ServerNoteId: noteId}, function (err, doc) {
 			// console.log(doc.length + '...');
-			if(doc.length > 1) {
+			if (doc.length > 1) {
 				console.error(doc.length + '. ..');
 			}
 			// console.log('note length: ' + doc.length + '. ..');
-			if(err || !doc || !doc.length) {
+			if (err || !doc || !doc.length) {
 				// log('getNoteByServerNoteId 不存在' + noteId);
 				callback && callback(false);
 			} else {
@@ -763,10 +792,10 @@ var Note = {
 			}
 		});
 	},
-	getNoteIdByServerNoteId: function(noteId, callback) {
-		var me = this;
-		db.notes.findOne({ServerNoteId: noteId}, function(err, doc) {
-			if(err || !doc) {
+	getNoteIdByServerNoteId: function (noteId, callback) {
+		const me = this;
+		db.notes.findOne({ServerNoteId: noteId}, function (err, doc) {
+			if (err || !doc) {
 				// log('getNoteIdByServerNoteId 不存在' + noteId);
 				callback && callback(false);
 			} else {
@@ -774,10 +803,10 @@ var Note = {
 			}
 		});
 	},
-	getServerNoteIdByNoteId: function(noteId, callback) {
-		var me = this;
-		db.notes.findOne({NoteId: noteId}, function(err, doc) {
-			if(err || !doc) {
+	getServerNoteIdByNoteId: function (noteId, callback) {
+		const me = this;
+		db.notes.findOne({NoteId: noteId}, function (err, doc) {
+			if (err || !doc) {
 				log('getServerNoteIdByNoteId 不存在');
 				callback && callback(false);
 			} else {
@@ -789,16 +818,16 @@ var Note = {
 	// 强制删除
 	// TODO 是否真的删除 ?
 	// 有可能服务器上删除了是误删 ?
-	deleteNoteForce: function(noteId, callback) {
-		var me = this;
-		me.getNoteByServerNoteId(noteId, function(note) {
-			if(!note) {
+	deleteNoteForce: function (noteId, callback) {
+		const me = this;
+		me.getNoteByServerNoteId(noteId, function (note) {
+			if (!note) {
 				callback && callback(false);
 				return;
 			}
 
-			db.notes.remove({_id: note._id}, function(err, n) {
-				if(err) {
+			db.notes.remove({_id: note._id}, function (err, n) {
+				if (err) {
 					callback && callback(false);
 				} else {
 					me.deleteNoteAllOthers(note);
@@ -812,33 +841,32 @@ var Note = {
 	// 添加笔记本, note object
 	// note是服务器传过来的, 需要处理下fix
 	// NoteId, ServerNoteId, NotebookId(本地的)
-	addNoteForce: function(note, callback) {
-		var me = this;
+	addNoteForce: function (note, callback) {
+		const me = this;
 		note.InitSync = true; // 刚同步完, 表示content, images, attach没有同步
 		note.IsDirty = false;
 		note.LocalIsDelete = false;
 		// 这里, 悲剧, 一个大BUG, 应该和server端IsTrash一致,
 		// 不然同步的时候将IsTrash的笔记同步到非IsTrash, 2015/10/31 fixed 谢谢 3601提供的信息
-		// note.IsTrash = false; 
+		// note.IsTrash = false;
 		if (typeof note.IsTrash == 'boolean') {
 			note.IsTrash = note.IsTrash;
-		}
-		else {
+		} else {
 			note.IsTrash = false;
 		}
-		
+
 		note.ServerNoteId = note.NoteId;
 		note.NoteId = Common.objectId();
-		
+
 		note.CreatedTime = Common.goNowToDate(note.CreatedTime);
 		note.UpdatedTime = Common.goNowToDate(note.UpdatedTime);
 
 		// 附件操作
-		var files = note.Files || [];
-		var attachs = [];
-		for(var i in files) {
-			var file = files[i];
-			if(file.IsAttach) { // LocalFileId, FileId
+		const files = note.Files || [];
+		const attachs = [];
+		for (let i in files) {
+			const file = files[i];
+			if (file.IsAttach) { // LocalFileId, FileId
 				file.ServerFileId = file.FileId;
 				file.FileId = file.ServerFileId; // 弄成一样的, 只是没有Path
 				attachs.push(file);
@@ -847,10 +875,10 @@ var Note = {
 		note.Attachs = attachs;
 		delete note['Files'];
 
-		Notebook.getNotebookIdByServerNotebookId(note.NotebookId, function(localNotebookId) {
+		Notebook.getNotebookIdByServerNotebookId(note.NotebookId, function (localNotebookId) {
 			note.NotebookId = localNotebookId;
 			db.notes.insert(note, function (err, newDoc) {   // Callback is optional
-				if(err) {
+				if (err) {
 					console.log(err);
 					callback && callback(false);
 				} else {
@@ -884,10 +912,10 @@ var Note = {
 	// note是服务器传过来的, 需要处理下fix
 	// note.NoteId是服务器的
 	// needReloadContent 内容是否需要重新加载, 如果处理冲突没有冲突, 已有内容, 不用更新, 只是把其它的覆盖
-	updateNoteForce: function(note, callback, needReloadContent) {
-		var me = this;
+	updateNoteForce: function (note, callback, needReloadContent) {
+		const me = this;
 
-		if(needReloadContent === undefined) {
+		if (needReloadContent === undefined) {
 			needReloadContent = true;
 		}
 
@@ -900,11 +928,11 @@ var Note = {
 		note.ContentIsDirty = false;
 
 		// 附件处理
-		var files = note.Files || [];
-		var attachsMap = [];
-		for(var i in files) {
-			var file = files[i];
-			if(file.IsAttach) { // LocalFileId, FileId
+		const files = note.Files || [];
+		const attachsMap = [];
+		for (let i in files) {
+			const file = files[i];
+			if (file.IsAttach) { // LocalFileId, FileId
 				// 对于服务器上的, 只有FileId会传过来, 此时要与之前的做对比
 				file.ServerFileId = file.FileId;
 				delete file['FileId'];
@@ -914,20 +942,20 @@ var Note = {
 
 		// 之前也是有attachs的, 得到之前的attachs, 进行个merge
 		// TODO, 这里, 如果serverNoteId有两个一样的, 就有问题了, 待重现
-		me.getNoteByServerNoteId(note.NoteId, function(everNote) {
-			if(!everNote) {
+		me.getNoteByServerNoteId(note.NoteId, function (everNote) {
+			if (!everNote) {
 				return;
 			}
-			var everAttachs = everNote.Attachs;
-			var everAttachsMap = {};
+			const everAttachs = everNote.Attachs;
+			const everAttachsMap = {};
 
 			// var needAdds = [];
 			// 得到要删除的
-			var needDeletes = [];
-			for(var i in everAttachs) {
-				var everAttach = everAttachs[i];
+			const needDeletes = [];
+			for (let i in everAttachs) {
+				const everAttach = everAttachs[i];
 				everAttachsMap[everAttach.ServerFileId] = everAttach;
-				if(!attachsMap[everAttach.ServerFileId]) {
+				if (!attachsMap[everAttach.ServerFileId]) {
 					needDeletes.push(everAttach);
 				}
 			}
@@ -940,9 +968,9 @@ var Note = {
 
 			// 得到要添加的,所有的
 			// 新添加的没有Path
-			var allAttachs = [];
-			for(var serverFileId in attachsMap) {
-				if(!everAttachsMap[serverFileId]) {
+			const allAttachs = [];
+			for (let serverFileId in attachsMap) {
+				if (!everAttachsMap[serverFileId]) {
 					// needAdds.push(attachMap[serverFileId]);
 					attachsMap[serverFileId].FileId = serverFileId; // 生成一个Id(一样的), 但是没有Path
 					allAttachs.push(attachsMap[serverFileId]);
@@ -960,13 +988,13 @@ var Note = {
 			// console.log(everNote);
 
 			// 得到本地笔记本Id
-			Notebook.getNotebookIdByServerNotebookId(note.NotebookId, function(localNotebookId) {
+			Notebook.getNotebookIdByServerNotebookId(note.NotebookId, function (localNotebookId) {
 				note['NotebookId'] = localNotebookId;
 
 				// console.log("updateNoteForce 后的")
 				// console.log(note);
 				// console.log(note.ServerNoteId + " " + note.IsDirty);
-				
+
 				// console.log('ever note');
 				// console.log(everNote.NoteId);
 				// console.log(everNote);
@@ -981,7 +1009,7 @@ var Note = {
 					// console.log(err);
 					// console.log(cnt);
 
-					if(err) {
+					if (err) {
 						console.error(err);
 						callback && callback(false);
 					} else {
@@ -1011,15 +1039,15 @@ var Note = {
 	// addNote, updateNote后的操作
 	// 添加修改ServerNoteId; 更新修改usn
 	// note是服务器传来的, note.NoteId, note.ServerNoteId已设置正确, note.NotebookId是服务器上的
-	updateNoteForceForSendChange: function(note, isAdd, callback) {
-		var me = this;
+	updateNoteForceForSendChange: function (note, isAdd, callback) {
+		const me = this;
 		note.IsDirty = false;
 		note.InitSync = false;
 		note.LocalIsNew = false;
 		note.ContentIsDirty = false;
 		// note.LocalIsDelete = false;
 		// note.UserId = User.getCurActiveUserId();
-		// 
+		//
 		// console.log("	updateNoteForceForSendChange", note);
 
 		// 如果是添加的, 因为不会传内容
@@ -1037,24 +1065,24 @@ var Note = {
 		File.updateImageForce(note.Files);
 
 		// 修改attach, 建立LocalFileId <=> FileId的映射
-		var files = note.Files || [];
-		var filesMap = {}; // LocalFileId => ServerFileId
-		for(var i in files) {
-			var file = files[i];
-			if(file.IsAttach) { // LocalFileId, FileId
+		const files = note.Files || [];
+		const filesMap = {}; // LocalFileId => ServerFileId
+		for (let i in files) {
+			const file = files[i];
+			if (file.IsAttach) { // LocalFileId, FileId
 				filesMap[file.LocalFileId] = file.FileId;
 			}
 		}
 		// 之前也是有attachs的, 得到之前的attachs, 进行个merge
-		me.getNote(note.NoteId, function(everNote) {
-			if(!everNote) {
+		me.getNote(note.NoteId, function (everNote) {
+			if (!everNote) {
 				console.log('	没有?' + note.NoteId);
 				return;
 			}
-			var everAttachs = everNote.Attachs || [];
-			for(var i in everAttachs) {
-				var everAttach = everAttachs[i];
-				if(filesMap[everAttach.FileId]) {
+			const everAttachs = everNote.Attachs || [];
+			for (let i in everAttachs) {
+				const everAttach = everAttachs[i];
+				if (filesMap[everAttach.FileId]) {
 					everAttach.ServerFileId = filesMap[everAttach.FileId];
 					everAttach.IsDirty = false; // 不为dirty了, 记得在sync后也改为false
 				}
@@ -1068,8 +1096,8 @@ var Note = {
 			note.Err = '';
 
 			// multi: true, 避免有历史的笔记有问题
-			db.notes.update({NoteId: note.NoteId}, {$set: note}, {multi: true}, function(err, n) {
-				if(err || !n) {
+			db.notes.update({NoteId: note.NoteId}, {$set: note}, {multi: true}, function (err, n) {
+				if (err || !n) {
 					console.log('	updateNoteForceForSendChange err', err);
 					return callback && callback(false);
 				}
@@ -1081,8 +1109,8 @@ var Note = {
 
 	// 服务器上的数据
 	// 为冲突更新, note已有有NoteId, ServerNoteId, 但NotebookId是服务器端的
-	updateNoteForceForConflict: function(note, callback) {
-		var me = this;
+	updateNoteForceForConflict: function (note, callback) {
+		const me = this;
 		note.NoteId = note.ServerNoteId;
 		me.updateNoteForce(note, callback);
 		return;
@@ -1093,10 +1121,10 @@ var Note = {
 		note.LocalIsDelete = false;
 		// 文件操作
 
-		Notebook.getNotebookIdByServerNotebookId(note.NotebookId, function(localNotebookId) {
+		Notebook.getNotebookIdByServerNotebookId(note.NotebookId, function (localNotebookId) {
 			note['NotebookId'] = localNotebookId;
 			db.notes.update({NoteId: note.NoteId}, {$set: note}, {}, function (err, cnt) {   // Callback is optional
-				if(err) {
+				if (err) {
 					console.log(err);
 					callback && callback(false);
 				} else {
@@ -1110,10 +1138,10 @@ var Note = {
 	// 将本地冲突的笔记复制一份
 	// serverNoteId
 	// 附件也要复制一份
-	copyNoteForConfict: function(noteId, callback) {
-		var me = this;
-		me.getNote(noteId, function(note) { 
-			if(!note) {
+	copyNoteForConfict: function (noteId, callback) {
+		const me = this;
+		me.getNote(noteId, function (note) {
+			if (!note) {
 				callback(false);
 				return;
 			}
@@ -1130,41 +1158,41 @@ var Note = {
 			note.LocalIsDelete = false;
 
 			// 只复制有path的
-			var attachs = note.Attachs || [];
-			var newAttachs = [];
+			const attachs = note.Attachs || [];
+			const newAttachs = [];
 			// console.log('不会吧.............')
 			// console.log(attachs);
-			async.eachSeries(attachs, function(attach, cb) {
-				if(!attach.Path) {
+			async.eachSeries(attachs, function (attach, cb) {
+				if (!attach.Path) {
 					return cb();
 				}
 				// 新路径
-				var filePathAttr = Common.splitFile(attach.Path);
+				const filePathAttr = Common.splitFile(attach.Path);
 				filePathAttr.nameNotExt += '_cp_' + attach.FileId; // 另一个
-				var newPath = filePathAttr.getFullPath();
+				const newPath = filePathAttr.getFullPath();
 				console.log('	复制文件', attach);
 				// 复制之
 				// try {
-					Common.copyFile(attach.Path, newPath, function(ret) {
-						if(ret) {
-							attach.FileId = Common.objectId();
-							attach.IsDirty = true;
-							attach.Path = newPath;
-							delete attach['ServerFileId'];
-							newAttachs.push(attach);
-						}
-						cb();
-					});
-					/*
-				} catch(e) {
+				Common.copyFile(attach.Path, newPath, function (ret) {
+					if (ret) {
+						attach.FileId = Common.objectId();
+						attach.IsDirty = true;
+						attach.Path = newPath;
+						delete attach['ServerFileId'];
+						newAttachs.push(attach);
+					}
 					cb();
-				}
-				*/
-			}, function() {
+				});
+				/*
+            } catch(e) {
+                cb();
+            }
+            */
+			}, function () {
 				note.Attachs = newAttachs;
 				console.log('	conflict 复制后的', note);
-				db.notes.insert(note, function(err, newNote) {
-					if(err) {
+				db.notes.insert(note, function (err, newNote) {
+					if (err) {
 						callback(false);
 
 					} else {
@@ -1178,14 +1206,14 @@ var Note = {
 	},
 
 	// 复制笔记到某笔记本下, 本地使用
-	copyNote: function(noteIds, notebookId, callback) {
-		var me = this;
-		var newNotes = [];
+	copyNote: function (noteIds, notebookId, callback) {
+		const me = this;
+		const newNotes = [];
 		if (Common.isEmpty(noteIds)) {
 			callback(false);
 			return;
 		}
-		async.eachSeries(noteIds, function(noteId, cbTop) {
+		async.eachSeries(noteIds, function (noteId, cbTop) {
 			me._copyNote(noteId, notebookId, function (newNote) {
 				newNotes.push(newNote);
 				cbTop();
@@ -1199,9 +1227,9 @@ var Note = {
 
 	// 复制单个笔记
 	_copyNote: function (noteId, notebookId, callback) {
-		var me = this;
-		me.getNote(noteId, function(note) { 
-			if(!note) {
+		const me = this;
+		me.getNote(noteId, function (note) {
+			if (!note) {
 				callback(false);
 				return;
 			}
@@ -1217,39 +1245,39 @@ var Note = {
 			note.NotebookId = notebookId;
 
 			// 只复制有path的
-			var attachs = note.Attachs || [];
-			var newAttachs = [];
-			async.eachSeries(attachs, function(attach, cb) {
-				if(!attach.Path) {
+			const attachs = note.Attachs || [];
+			const newAttachs = [];
+			async.eachSeries(attachs, function (attach, cb) {
+				if (!attach.Path) {
 					return cb();
 				}
 				// 新路径
-				var filePathAttr = Common.splitFile(attach.Path);
+				const filePathAttr = Common.splitFile(attach.Path);
 				filePathAttr.nameNotExt += '_cp_' + attach.FileId; // 另一个
-				var newPath = filePathAttr.getFullPath();
+				const newPath = filePathAttr.getFullPath();
 				// 复制之
 				// try {
-					Common.copyFile(attach.Path, newPath, function(ret) {
-						if(ret) {
-							attach.FileId = Common.objectId();
-							attach.IsDirty = true;
-							attach.Path = newPath;
-							delete attach['ServerFileId'];
-							newAttachs.push(attach);
-						}
-						cb();
-					});
-					/*
-				} catch(e) {
+				Common.copyFile(attach.Path, newPath, function (ret) {
+					if (ret) {
+						attach.FileId = Common.objectId();
+						attach.IsDirty = true;
+						attach.Path = newPath;
+						delete attach['ServerFileId'];
+						newAttachs.push(attach);
+					}
 					cb();
-				}
-				*/
-			}, function() {
+				});
+				/*
+            } catch(e) {
+                cb();
+            }
+            */
+			}, function () {
 				note.Attachs = newAttachs;
 				// console.log('conflict 复制后的');
 				// console.log(note.Attachs);
-				db.notes.insert(note, function(err, newNote) {
-					if(err) {
+				db.notes.insert(note, function (err, newNote) {
+					if (err) {
 						callback(false);
 					} else {
 						callback(newNote);
@@ -1264,19 +1292,19 @@ var Note = {
 	// notes是服务器的数据, 与本地的有冲突
 	// 1) 将本地的note复制一份
 	// 2) 服务器替换之前
-	fixConflicts: function(noteSyncInfo, callback) {
-		var me = this;
+	fixConflicts: function (noteSyncInfo, callback) {
+		const me = this;
 
-		var conflictNotes = noteSyncInfo.conflicts;
+		let conflictNotes = noteSyncInfo.conflicts;
 		if (!isEmpty(conflictNotes)) {
 			console.log('	fix note conflicts', conflictNotes);
 		}
 		// 这里为什么要同步? 因为fixConflicts后要进行send changes, 这些有冲突的不能发送changes
 		conflictNotes || (conflictNotes = []);
-		if(!Api) {
+		if (!Api) {
 			Api = require('./api')
 		}
-		async.eachSeries(conflictNotes, function(serverAndLocalNote, cb) {
+		async.eachSeries(conflictNotes, function (serverAndLocalNote, cb) {
 			// var noteId = note.NoteId; // 本地noteId
 			// 复制一份, 本地的复制一份, 然后服务器上的替换本地的
 			// newNote其实是现有的复制一份得到的
@@ -1284,42 +1312,42 @@ var Note = {
 			// TODO, 这里, 如果内容是一样的, 则以服务器上的版为准
 
 			// console.error('是否真的冲突');
-			var serverNote = serverAndLocalNote.server; // noteId没有转换的
-			var localNote = serverAndLocalNote.local; // 本地的note
+			const serverNote = serverAndLocalNote.server; // noteId没有转换的
+			const localNote = serverAndLocalNote.local; // 本地的note
 
-			Api.getNoteContent(serverNote.NoteId, function(noteContent) {
+			Api.getNoteContent(serverNote.NoteId, function (noteContent) {
 				// 同步到本地
-				if(Common.isOk(noteContent)) {
-					var serverContent = me.fixNoteContent(noteContent.Content); // 图片, 附件的链接
+				if (Common.isOk(noteContent)) {
+					const serverContent = me.fixNoteContent(noteContent.Content); // 图片, 附件的链接
 					// var serverContent = noteContent.Content; // 图片, 附件的链接
 
 					// console.error(serverContent);
 					// console.error(localNote.Content);
 
 					// 没有冲突, 好, 用服务器端的其它值
-					if(serverContent == localNote.Content) { 
+					if (serverContent === localNote.Content) {
 						// console.error(localNote.Title + ' 无冲突');
 						// console.log(serverNote);
 						delete serverNote['Content'];
 						delete serverNote['Abstract'];
 						delete serverNote['Desc'];
-						me.updateNoteForce(serverNote, function(updatedNote) {
+						me.updateNoteForce(serverNote, function (updatedNote) {
 							// 作为更新
 							noteSyncInfo.updates.push(updatedNote);
 							cb();
 						}, false);
 					}
 
-					// 不行, 冲突了, 复制一份
+						// 不行, 冲突了, 复制一份
 					// TODO 用新的Content, 不要再去取了
 					else {
-						me.copyNoteForConfict(localNote.NoteId, function(newNote) {
-							if(newNote) {
+						me.copyNoteForConfict(localNote.NoteId, function (newNote) {
+							if (newNote) {
 								// 更新之前的
 								serverNote.ServerNoteId = serverNote.NoteId;
 								serverNote.NoteId = localNote.NoteId;
-								me.updateNoteForceForConflict(serverNote, function(note2) { 
-									if(note2) {
+								me.updateNoteForceForConflict(serverNote, function (note2) {
+									if (note2) {
 										// 前端来处理, 全量sync时不用前端一个个处理
 										Web.fixSyncConflictNote(note2, newNote);
 									}
@@ -1332,8 +1360,8 @@ var Note = {
 					}
 				}
 			});
-			
-		}, function() {
+
+		}, function () {
 			// 最后调用
 			callback && callback();
 
@@ -1345,29 +1373,29 @@ var Note = {
 		// 发送改变的冲突
 		// 复制一份
 		// 发送改变的冲突, 有这种情况发生吗?
-		var changeConflicts = noteSyncInfo.changeConflicts;
+		const changeConflicts = noteSyncInfo.changeConflicts;
 		// console.log('changeConflicts');
 		// console.log(changeConflicts);
-		for(var i in changeConflicts) {
-			(function(i) {
+		for (var i in changeConflicts) {
+			(function (i) {
 
-				var note = changeConflicts[i]; // note是本地的note
+				const note = changeConflicts[i]; // note是本地的note
 				// 复制一份
-				me.copyNoteForConfict(note.NoteId, function(newNote) {
-					if(newNote) {
+				me.copyNoteForConfict(note.NoteId, function (newNote) {
+					if (newNote) {
 						// 更新之前的, 要先从服务器上得到服务版的
 						// 这里的note是本地的, 所以将服务器上的覆盖它
-						if(!Api) {
+						if (!Api) {
 							Api = require('./api');
 						}
-						Api.getNote(note.ServerNoteId, function(serverNote) {
+						Api.getNote(note.ServerNoteId, function (serverNote) {
 							serverNote.ServerNoteId = serverNote.NoteId;
 							serverNote.NoteId = note.NoteId;
 							// console.error("changeConflicts -> get note from server");
 							// console.log(serverNote);
 							// console.log(note);
-							me.updateNoteForceForConflict(serverNote, function(note2) { 
-								if(!note2) {
+							me.updateNoteForceForConflict(serverNote, function (note2) {
+								if (!note2) {
 									// 前端来处理, 全量sync时不用前端一个个处理
 									Web.fixSyncConflict(note2, newNote);
 								}
@@ -1389,7 +1417,7 @@ var Note = {
 			Web.updateSyncNote(noteSyncInfo.updates);
 		}
 		// 处理添加的
-		var addNotes = noteSyncInfo.adds;
+		const addNotes = noteSyncInfo.adds;
 		if (!isEmpty(addNotes)) {
 			console.log('	has add note...', addNotes);
 			Web.addSyncNote(addNotes);
@@ -1411,9 +1439,9 @@ var Note = {
 		}
 
 		// 服务器没有, 但是是发送更新的, 所以需要作为添加以后再send changes
-		if(noteSyncInfo.changeNeedAdds) { 
-			var needAddNotes = noteSyncInfo.changeNeedAdds;
-			for(var i in needAddNotes) {
+		if (noteSyncInfo.changeNeedAdds) {
+			const needAddNotes = noteSyncInfo.changeNeedAdds;
+			for (var i in needAddNotes) {
 				console.log('	need add note');
 				var note = needAddNotes[i];
 				me.setIsNew(note.NoteId);
@@ -1421,23 +1449,23 @@ var Note = {
 		}
 
 		// 为了博客
-		var changeAdds = noteSyncInfo.changeAdds || [];
-		var changeUpdates = noteSyncInfo.changeUpdates || [];
+		let changeAdds = noteSyncInfo.changeAdds || [];
+		const changeUpdates = noteSyncInfo.changeUpdates || [];
 		changeAdds = changeAdds.concat(changeUpdates);
 		Web.updateNoteCacheForServer(changeAdds);
 	},
 
 	// 得到所有文件要传的基本信息和传送的数据
-	getFilesPostInfo: function(files, callback) {
-		var needPostFilesAttr = [];
-		var needTransferFiles = {};
-		if(!files || files.length == 0) {
+	getFilesPostInfo: function (files, callback) {
+		const needPostFilesAttr = [];
+		const needTransferFiles = {};
+		if (!files || files.length === 0) {
 			return callback(needPostFilesAttr, needTransferFiles);
 		}
 
-		async.eachSeries(files, function(file, cb) {
+		async.eachSeries(files, function (file, cb) {
 			// var file = files[i];
-			var needFile = {
+			const needFile = {
 				FileId: file.ServerFileId,
 				LocalFileId: file.FileId,
 				Type: file.Type,
@@ -1447,18 +1475,18 @@ var Note = {
 
 			// console.log(file);
 			// 要传数据的
-			if(file.IsDirty) {
+			if (file.IsDirty) {
 				// TODO
-				if(file.Path.indexOf('data/') == 0) {
+				if (file.Path.indexOf('data/') === 0) {
 					file.Path = Evt.getAbsolutePath(file.Path);
 				}
-				fs.exists(file.Path, function(isExists) {
-					if(isExists) {
+				fs.exists(file.Path, function (isExists) {
+					if (isExists) {
 						needTransferFiles[file.FileId] = {
 							file: file.Path,
 							content_type: 'application/' + file.Type // TODO
 						}
-						if(file.Title) {
+						if (file.Title) {
 							needTransferFiles[file.FileId].filename = file.Title;
 						}
 						needFile.HasBody = true;
@@ -1470,35 +1498,35 @@ var Note = {
 				needPostFilesAttr.push(needFile);
 				return cb();
 			}
-		}, function() {
+		}, function () {
 			callback(needPostFilesAttr, needTransferFiles);
 		});
 	},
 
 	// 获得用户修改的笔记
-	getDirtyNotes: function(callback) {
-		var me = this;
-		db.notes.find({UserId: User.getCurActiveUserId(), IsDirty: true}, function(err, notes) {
-			if(err) {
+	getDirtyNotes: function (callback) {
+		const me = this;
+		db.notes.find({UserId: User.getCurActiveUserId(), IsDirty: true}, function (err, notes) {
+			if (err) {
 				log(err);
 				return callback && callback(false);
 			} else {
 				// 每一个笔记得到图片, 附件信息和数据
-				async.eachSeries(notes, function(note, cb) {
+				async.eachSeries(notes, function (note, cb) {
 					//  LocalContent 留作副本, 用于冲突判断
 					note.LocalContent = note.Content;
 
 					note.Content = me.fixContentUrl(note.Content);
-					me.getNoteFiles(note, function(files) {
+					me.getNoteFiles(note, function (files) {
 						note.Content = me.fixNoteContentForSend(note.Content);
 						// note.Files = files || [];
-						me.getFilesPostInfo(files, function(attrs, fileDatas) { 
+						me.getFilesPostInfo(files, function (attrs, fileDatas) {
 							note.Files = attrs;
 							note.FileDatas = fileDatas;
 							cb();
 						});
 					});
-				}, function() {
+				}, function () {
 					callback(notes);
 				});
 			}
@@ -1506,7 +1534,7 @@ var Note = {
 	},
 
 	// 历史原因, 支持了protocol, 但url还是有127
-	fixContentUrl: function(content) {
+	fixContentUrl: function (content) {
 		if (!content) {
 			return content;
 		}
@@ -1516,15 +1544,15 @@ var Note = {
 	},
 
 	// 得到笔记的文件
-	getNoteFiles: function(note, callback) {
-		var noteId = note.NoteId;
+	getNoteFiles: function (note, callback) {
+		const noteId = note.NoteId;
 		// 先处理内容URL
-		var content = note.Content;
+		const content = note.Content;
 
 		// 1. 先得到附件
-		var attachs = note.Attachs || [];
-		for(var i in attachs) {
-			var attach = attachs[i];
+		let attachs = note.Attachs || [];
+		for (let i in attachs) {
+			const attach = attachs[i];
 			attach.IsAttach = true;
 		}
 
@@ -1535,83 +1563,83 @@ var Note = {
 		// console.log(content);
 		// console.log(Evt.localUrl + '/api/file/getImage?fileId=([0-9a-zA-Z]{24})');
 		// var reg = new RegExp(Evt.localUrl + "/api/file/getImage\\?fileId=([0-9a-zA-Z]{24})", 'g');
-		var reg = new RegExp(Evt.getImageLocalUrlPrefix() + "\\?fileId=([0-9a-zA-Z]{24})", 'g');
-		var fileIds = [];
+		const reg = new RegExp(Evt.getImageLocalUrlPrefix() + "\\?fileId=([0-9a-zA-Z]{24})", 'g');
+		const fileIds = [];
 		// var fileIdsMap = {}; // 防止多个
-		while((result = reg.exec(content)) != null) {
+		while ((result = reg.exec(content)) != null) {
 			// result = [所有, 子表达式1, 子表达式2]
-			if(result && result.length > 1) {
-	            // console.log(result);
-				var fileId = result[1];
+			if (result && result.length > 1) {
+				// console.log(result);
+				const fileId = result[1];
 				fileIds.push(fileId);
 			}
-        }
-        var files = []; // {localFileId: "must", fileId: "", hasBody: true, filename: "xx.png"}
-        if(fileIds.length > 0) {
-        	// 得到所有的图片
-        	File.getAllImages(fileIds, function(images) {
-        		// attach与图片结合
-        		if(images) {
-        			attachs = attachs.concat(images);
-        		}
-        		callback(attachs);
-        	});
-        } else {
-        	callback(attachs);
-        }
+		}
+		const files = []; // {localFileId: "must", fileId: "", hasBody: true, filename: "xx.png"}
+		if (fileIds.length > 0) {
+			// 得到所有的图片
+			File.getAllImages(fileIds, function (images) {
+				// attach与图片结合
+				if (images) {
+					attachs = attachs.concat(images);
+				}
+				callback(attachs);
+			});
+		} else {
+			callback(attachs);
+		}
 	},
 
 	// 在send delete笔记时成功
-	setNotDirty: function(noteId) {
+	setNotDirty: function (noteId) {
 		db.notes.update({NoteId: noteId}, {$set: {IsDirty: false}})
 	},
-	removeNote: function(noteId) {
+	removeNote: function (noteId) {
 		db.notes.remove({NoteId: noteId});
 	},
 	// 在send delete笔记时有冲突, 设为不删除
-	setNotDirtyNotDelete: function(noteId) {
-		db.notes.update({NoteId: noteId}, {$set:{IsDirty: false, LocalIsDelete: false}})
+	setNotDirtyNotDelete: function (noteId) {
+		db.notes.update({NoteId: noteId}, {$set: {IsDirty: false, LocalIsDelete: false}})
 	},
-	setIsNew: function(noteId) {
-		db.notes.update({NoteId: noteId}, {$set:{LocalIsNew: true, IsDirty: true}})
+	setIsNew: function (noteId) {
+		db.notes.update({NoteId: noteId}, {$set: {LocalIsNew: true, IsDirty: true}})
 	},
 
 	//----------------------------------
 	// Attach
-	// 有部分操作放在File中了, 
+	// 有部分操作放在File中了,
 	// 也有attach表, 但只作添加/删除附件用
-	// 
+	//
 
 	// 更新笔记的附件
 	// web只要一个添加了, 删除的, 全部更新
-	updateAttach: function(noteId, attachs) {
-		var me = this;
+	updateAttach: function (noteId, attachs) {
+		const me = this;
 		console.log('updateAttach');
 		console.log(attachs);
 
 		// 删除修改了的
-		me.deleteNotExistsAttach(noteId, attachs, function() {
+		me.deleteNotExistsAttach(noteId, attachs, function () {
 			// 一个坑!!!!!!!!!!!, js是引用的, needb并不会立即写到硬盘上, 在内存中是一个引用
-			var t = [];
-			for(var i in attachs) {
+			const t = [];
+			for (let i in attachs) {
 				t.push(attachs[i]);
 			}
-			db.notes.update({NoteId: noteId}, {$set: {Attachs: t, IsDirty: true, UpdatedTime: new Date()}} );
+			db.notes.update({NoteId: noteId}, {$set: {Attachs: t, IsDirty: true, UpdatedTime: new Date()}});
 		});
 	},
 
 	// web端操作, 删除attach时, 删除不要的attach
-	deleteNotExistsAttach: function(noteId, attachs, callback) {
-		var me = this;
+	deleteNotExistsAttach: function (noteId, attachs, callback) {
+		const me = this;
 		// console.log('--');
-		me.getNote(noteId, function(note) {
-			if(!note) {
+		me.getNote(noteId, function (note) {
+			if (!note) {
 				callback();
 				return;
 			}
-			var everAttachs = note.Attachs || [];
-			var nowMap = {};
-			for(var i in attachs) {
+			const everAttachs = note.Attachs || [];
+			const nowMap = {};
+			for (var i in attachs) {
 				nowMap[attachs[i].FileId] = attachs[i];
 			}
 			// console.log(note);
@@ -1619,18 +1647,19 @@ var Note = {
 			// console.log(everAttachs.length);
 			// console.log(attachs.length);
 			// console.log(attachs == everAttachs);
-			var fileBasePath = User.getCurUserAttachsPath();
-			for(var i in everAttachs) {
-				var attach = everAttachs[i];
-				var path = attach.Path;
-				if(!nowMap[attach.FileId]) { // 如果不在, 则删除之
+			const fileBasePath = User.getCurUserAttachsPath();
+			for (var i in everAttachs) {
+				const attach = everAttachs[i];
+				const path = attach.Path;
+				if (!nowMap[attach.FileId]) { // 如果不在, 则删除之
 					// console.log(">>>>>>>>>");
 					try {
 						// 删除源文件, 别删错了啊
-						if(path.indexOf(fileBasePath) >= 0) {
-							fs.unlink(path, () => {});
+						if (path.indexOf(fileBasePath) >= 0) {
+							fs.unlink(path, () => {
+							});
 						}
-					} catch(e) {
+					} catch (e) {
 						console.log(e);
 					}
 				}
@@ -1648,18 +1677,19 @@ var Note = {
 
 	// 删除附件, 在sync时
 	// 或者, 在删除笔记后
-	deleteAttachs: function(attachs) {
-		if (!attachs || attachs.length == 0) {
+	deleteAttachs: function (attachs) {
+		if (!attachs || attachs.length === 0) {
 			return;
 		}
-		var me = this;
-		var fileBasePath = User.getCurUserAttachsPath();
-		for(var i = 0; i < attachs.length; ++i) {
-			var path = attachs[i].Path;
-			if(path && path.indexOf(fileBasePath) >= 0) {
+		const me = this;
+		const fileBasePath = User.getCurUserAttachsPath();
+		for (let i = 0; i < attachs.length; ++i) {
+			const path = attachs[i].Path;
+			if (path && path.indexOf(fileBasePath) >= 0) {
 				try {
-					fs.unlink(path, () => {});
-				} catch(e) {
+					fs.unlink(path, () => {
+					});
+				} catch (e) {
 					console.error(e);
 				}
 			}
@@ -1669,18 +1699,18 @@ var Note = {
 	// 同步内容, 图片, 附件
 	// 异步操作
 	// 延迟1s
-	syncContentAndImagesAndAttachs: function(note, timeout) {
-		var me = this;
-		setTimeout(function() {
+	syncContentAndImagesAndAttachs: function (note, timeout) {
+		const me = this;
+		setTimeout(function () {
 			// 内容
 			console.log("	syncContentAndImagesAndAttachs..... " + note.NoteId);
-			me.getNoteContent(note.NoteId, function(noteAndContent) { 
-				if(noteAndContent) {
+			me.getNoteContent(note.NoteId, function (noteAndContent) {
+				if (noteAndContent) {
 					console.log('	sync content ' + note.NoteId + ' ok');
-					var content = noteAndContent.Content;
+					const content = noteAndContent.Content;
 					Web.contentSynced(note.NoteId, note.Content);
 					// 图片
-					if(content) {
+					if (content) {
 						me.syncImages(content);
 					}
 				} else {
@@ -1689,19 +1719,19 @@ var Note = {
 			});
 
 			// 附件
-			var attachs = note.Attachs || [];
-			for(var i = 0; i < attachs.length; ++i) {
-				var attach = attachs[i];
+			const attachs = note.Attachs || [];
+			for (let i = 0; i < attachs.length; ++i) {
+				const attach = attachs[i];
 				me.downloadAttachFromServer(note.NoteId, attach.ServerFileId, attach.FileId);
 			}
 		}, timeout || 1000);
 	},
 
 	// 同步图片
-	inSyncImage: {}, // 
-	syncImages: function(content) {
-		var me = this;
-		if(!content) {
+	inSyncImage: {}, //
+	syncImages: function (content) {
+		const me = this;
+		if (!content) {
 			return;
 		}
 
@@ -1711,19 +1741,19 @@ var Note = {
 		// console.log(content);
 		// 得到图片id
 		// var reg = new RegExp(Evt.localUrl + "/api/file/getImage\\?fileId=(.{24})\"", 'g');
-		var reg = new RegExp(Evt.getImageLocalUrlPrefix() + "\\?fileId=([0-9a-zA-Z]{24})", 'g');
+		const reg = new RegExp(Evt.getImageLocalUrlPrefix() + "\\?fileId=([0-9a-zA-Z]{24})", 'g');
 		// var a = 'abdfileId="xxx" alksdjfasdffileId="life"';
 		// var reg = /fileId="(.+?)"/g;
-		var s;
+		let s;
 		// console.log(reg);
-		while(s = reg.exec(content)) {
+		while (s = reg.exec(content)) {
 			// console.log(s);
-			if(s && s.length >= 2) {
-				var fileId = s[1];
+			if (s && s.length >= 2) {
+				const fileId = s[1];
 				// console.log('sync image: ' + fileId);
-				if(!me.inSyncImage[fileId]) {
+				if (!me.inSyncImage[fileId]) {
 					me.inSyncImage[fileId] = true;
-					File.getImage(fileId, function() {
+					File.getImage(fileId, function () {
 						me.inSyncImage[fileId] = false;
 					});
 				}
@@ -1738,24 +1768,24 @@ var Note = {
 	*/
 	inDownload: {}, // 正在下载的文件 fileId => true
 	downloaded: {}, // 下载完成的
-	downloadAttachFromServer: function(noteId, serverFileId, fileId) {
-		var me = this;
+	downloadAttachFromServer: function (noteId, serverFileId, fileId) {
+		const me = this;
 		console.log('下载中: ' + serverFileId);
-		if(me.inDownload[serverFileId] || me.downloaded[serverFileId]) {
+		if (me.inDownload[serverFileId] || me.downloaded[serverFileId]) {
 			// return;
 		}
-		if(!Api) {
+		if (!Api) {
 			Api = require('./api');
 		}
 
 		me.inDownload[serverFileId] = true;
-		Api.getAttach(serverFileId, function(ok, toPath, filename) { 
+		Api.getAttach(serverFileId, function (ok, toPath, filename) {
 			me.inDownload[serverFileId] = false;
-			if(ok) {
+			if (ok) {
 				me.downloaded[serverFileId] = fileId;
 				// 更新serverFileId与fileId的映射, 修改的是note
-				me.syncAttach(noteId, serverFileId, fileId, toPath, filename, function(ok, attachs, attach) {
-					if(ok) {
+				me.syncAttach(noteId, serverFileId, fileId, toPath, filename, function (ok, attachs, attach) {
+					if (ok) {
 						// 通知web
 						Web.attachSynced(attachs, attach, noteId);
 					}
@@ -1769,22 +1799,22 @@ var Note = {
 	},
 
 	// 同步附件, 更新serverFileId
-	syncAttach: function(noteId, serverFileId, fileId, path, filename, callback) {
-		var me = this;
-		me.getNote(noteId, function(note) {
-			if(!note) {
+	syncAttach: function (noteId, serverFileId, fileId, path, filename, callback) {
+		const me = this;
+		me.getNote(noteId, function (note) {
+			if (!note) {
 				callback(false);
 			}
-			var attachs = note.Attachs;
-			for(var i in attachs) {
-				var attach = attachs[i];
-				if(attach.FileId == fileId) {
+			const attachs = note.Attachs;
+			for (let i in attachs) {
+				const attach = attachs[i];
+				if (attach.FileId === fileId) {
 					attach.ServerFileId = serverFileId;
 					attach.Path = path;
 					// attach.Title = filename;
 					// attach.Filename = filename;
 
-					db.notes.update({_id: note._id}, {$set: {Attachs: attachs}}, function() {
+					db.notes.update({_id: note._id}, {$set: {Attachs: attachs}}, function () {
 						callback(true, attachs, attach);
 					});
 					break;
@@ -1795,28 +1825,28 @@ var Note = {
 	},
 
 	// 根据标签得到笔记数量
-	countNoteByTag: function(title, callback) {
-		var userId = User.getCurActiveUserId();
-		db.notes.count({UserId: userId, LocalIsDelete: false , Tags: {$in: [title]}}, function(err, cnt) {
+	countNoteByTag: function (title, callback) {
+		const userId = User.getCurActiveUserId();
+		db.notes.count({UserId: userId, LocalIsDelete: false, Tags: {$in: [title]}}, function (err, cnt) {
 			callback && callback(cnt);
 		});
 	},
 	// 彻底删除笔记时调用
-	updateTagCount: function(tags) {
-		var me = this;
-		if(!tags) {
+	updateTagCount: function (tags) {
+		const me = this;
+		if (!tags) {
 			return;
 		}
-		var tagUpdate = {}; // 
-		if(!Tag) {
+		const tagUpdate = {}; //
+		if (!Tag) {
 			Tag = require('./tag');
 		}
 
-		var userId = User.getCurActiveUserId();
-		for(var i in tags) {
-			var title = tags[i];
-			(function(t) {
-				me.countNoteByTag(t, function(cnt) {
+		const userId = User.getCurActiveUserId();
+		for (let i in tags) {
+			const title = tags[i];
+			(function (t) {
+				me.countNoteByTag(t, function (cnt) {
 					Tag.updateTagCount(t, cnt);
 				});
 			})(title);
@@ -1828,22 +1858,22 @@ var Note = {
 	// tag.js调用
 	// 删除包含title的笔记
 	// 先删除tag, 再删除tag.js
-	updateNoteToDeleteTag: function(title, callback) {
+	updateNoteToDeleteTag: function (title, callback) {
 		if (!title) {
 			return callback({});
 		}
-		var updates = {}; // noteId => 
-		var userId = User.getCurActiveUserId();
+		const updates = {}; // noteId =>
+		const userId = User.getCurActiveUserId();
 		console.log('	updateNoteToDeleteTag', title);
-		db.notes.find({UserId: userId, LocalIsDelete: false , Tags: {$in: [title]}}, function(err, notes) {
-			console.log(	'updateNoteToDeleteTag notes', err, title, notes);
-			if(!err && notes && notes.length > 0) {
-				for(var i = 0; i < notes.length; ++i) {
-					var note = notes[i];
-					var tags = note.Tags;
+		db.notes.find({UserId: userId, LocalIsDelete: false, Tags: {$in: [title]}}, function (err, notes) {
+			console.log('updateNoteToDeleteTag notes', err, title, notes);
+			if (!err && notes && notes.length > 0) {
+				for (let i = 0; i < notes.length; ++i) {
+					const note = notes[i];
+					const tags = note.Tags;
 					// 删除之
-					for(var j = 0; j < tags.length; ++j) {
-						if(tags[j] == title) {
+					for (let j = 0; j < tags.length; ++j) {
+						if (tags[j] === title) {
 							// tags = tags.splice(j, 1); // 之前是这样, 返回的是删除之后的
 							tags.splice(j, 1);
 							break;
@@ -1852,7 +1882,7 @@ var Note = {
 					note.Tags = tags;
 					note.IsDirty = true;
 					updates[note.NoteId] = note;
-					db.notes.update({_id: note._id}, {$set: {Tags: tags, IsDirty: true}}, function(err) {
+					db.notes.update({_id: note._id}, {$set: {Tags: tags, IsDirty: true}}, function (err) {
 						// console.log("??");
 						// console.log(err);
 						callback(updates);
@@ -1866,29 +1896,29 @@ var Note = {
 		});
 	},
 
-	exportPdf: function(noteId, callback) {
-		var me = this;
-		me.getServerNoteIdByNoteId(noteId, function(serverNoteId) {
-			if(!serverNoteId) {
+	exportPdf: function (noteId, callback) {
+		const me = this;
+		me.getServerNoteIdByNoteId(noteId, function (serverNoteId) {
+			if (!serverNoteId) {
 				callback({Ok: false, Msg: 'noteNotExists'});
 			} else {
 				if (!Api) {
 					Api = require('./api');
 				}
-				Api.exportPdf(serverNoteId, callback); 
+				Api.exportPdf(serverNoteId, callback);
 			}
 		})
 	},
 
 	// 设置笔记同步错误信息
 	setError: function (noteId, err, ret, callback) {
-		var me = this;
-		var Err = {};
+		const me = this;
+		const Err = {};
 		try {
 			if (err && typeof err == 'object') {
 				Err.err = err.toString();
 			}
-		} catch(e) {
+		} catch (e) {
 		}
 		if (typeof ret == 'object' && 'Msg' in ret) {
 			Err.msg = ret.Msg;
@@ -1896,7 +1926,7 @@ var Note = {
 			Err.msg = ret + '';
 		}
 
-		db.notes.update({NoteId: noteId}, { $set: {Err: msg} }, {}, function (err, numReplaced) { 
+		db.notes.update({NoteId: noteId}, {$set: {Err: msg}}, {}, function (err, numReplaced) {
 			return callback && callback(true);
 		});
 	}

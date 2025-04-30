@@ -27,12 +27,12 @@
  * 
  */
 define(function() {
-	var async; //  = require('async');
+	let async; //  = require('async');
 
 	//===========
 	// start
 
-	var exportLeanote = {
+	return {
 		langs: {
 			'en-us': {
 				'export': 'Export Leanote',
@@ -68,7 +68,7 @@ define(function() {
 
 		_inited: false,
 		init: function() {
-			var me = this;
+			const me = this;
 			if (me._inited) {
 				return;
 			}
@@ -83,7 +83,7 @@ define(function() {
 				return src;
 			}
 			while(true) {
-				var oldSrc = src;
+				const oldSrc = src;
 				src = src.replace(pattern, to);
 				if(oldSrc === src) {
 					return src;
@@ -92,23 +92,23 @@ define(function() {
 		},
 
 		fixFilename: function(filename) {
-			var reg = new RegExp("/|#|\\$|!|\\^|\\*|'| |\"|%|&|\\(|\\)|\\+|\\,|/|:|;|<|>|=|\\?|@|\\||\\\\", 'g');
+			const reg = new RegExp("[/#$!^*\' \"%&()+,:;<>=?@|\\\\]", 'g');
 			filename = filename.replace(reg, "-");
 			// 防止出现两个连续的-
-			while(filename.indexOf('--') != -1) {
+			while(filename.indexOf('--') !== -1) {
 				filename = this.replaceAll(filename, '--', '-');
 			}
 			if (filename.length > 1) {
 				// 最后一个-
-				filename = filename.replace(/\-$/, '');
+				filename = filename.replace(/-$/, '');
 			}
 			return filename;
 		},
 
 		fixContent: function (content) {
 			// srip unsage attrs
-			var unsafeAttrs = ['id', , /on\w+/i, /data-\w+/i, 'clear', 'target'];
-		    content = content.replace(/<([^ >]+?) [^>]*?>/g, Api.Resanitize.filterTag(Api.Resanitize.stripAttrs(unsafeAttrs)));
+			const unsafeAttrs = ['id', , /on\w+/i, /data-\w+/i, 'clear', 'target'];
+			content = content.replace(/<([^ >]+?) [^>]*?>/g, Api.Resanitize.filterTag(Api.Resanitize.stripAttrs(unsafeAttrs)));
 
 		    // strip unsafe tags
 		    content = Api.Resanitize.stripUnsafeTags(content, 
@@ -139,31 +139,31 @@ define(function() {
 		},
 		
 		render: function(note, callback) {
-			var me = this;
-			var appVersion = Api.getCurVersion() || {version: 'unknown'};
-			var info = {
+			const me = this;
+			const appVersion = Api.getCurVersion() || {version: 'unknown'};
+			const info = {
 				exportDate: me.getLeanoteTime(),
 				app: 'leanote.desktop.app.' + process.platform,
 				appVersion: appVersion.version,
 				apiVersion: '0.1',
 				notes: []
-			}
+			};
 			me.fixFiles(note, function (content, files) {
 				// 非markdown才需要这样, 补全html标签
 				if (!note.IsMarkdown) {
 					content = $('<div>' + content + '</div>').html();
 				}
 
-				var filesArr = [];
+				const filesArr = [];
 				files || (files = {});
-				for (var fileId in files) {
+				for (let fileId in files) {
 					if (files.hasOwnProperty(fileId)) {
 						files[fileId].fileId = fileId;
 						filesArr.push(files[fileId]);
 					}
 				}
 
-				var noteInfo = {
+				const noteInfo = {
 					title: note.Title,
 					content: !note.IsMarkdown ? me.fixContent(content) : content,
 					tags: note.Tags,
@@ -171,7 +171,7 @@ define(function() {
 					isMarkdown: note.IsMarkdown,
 					createdTime: me.getLeanoteTime(note.CreatedTime),
 					updatedTime: me.getLeanoteTime(note.UpdatedTime),
-					files: filesArr 
+					files: filesArr
 				};
 				info.notes.push(noteInfo);
 				callback(JSON.stringify(info, null, 2));
@@ -195,8 +195,8 @@ define(function() {
 		},
 
 		findAllImages: function (note) {
-			var content = note.Content;
-			var allMatchs = [];
+			const content = note.Content;
+			const allMatchs = [];
 
 			// markdown下
 			// [](http://localhost://fileId=32);
@@ -205,7 +205,7 @@ define(function() {
 				var matches = reg.exec(content);
 				while(matches) {
 				    var all = matches[0];
-				    var title = matches[1]; // img与src之间
+					const title = matches[1]; // img与src之间
 				    var fileId = matches[2];
 				    allMatchs.push({
 				    	fileId: fileId,
@@ -221,9 +221,9 @@ define(function() {
 				var matches = reg.exec(content);
 				while(matches) {
 				    var all = matches[0];
-				    var pre = matches[1]; // img与src之间
+					const pre = matches[1]; // img与src之间
 				    var fileId = matches[2];
-				    var back = matches[3]; // src与>之间
+					const back = matches[3]; // src与>之间
 				    allMatchs.push({
 				    	fileId: fileId,
 				    	pre: pre,
@@ -239,9 +239,9 @@ define(function() {
 		},
 
 		findAllAttachs: function (note) {
-			var content = note.Content;
+			const content = note.Content;
 
-			var allMatchs = [];
+			const allMatchs = [];
 			// markdown下
 			// ![](http://localhost://fileId=32);
 			if (note.IsMarkdown) {
@@ -267,9 +267,9 @@ define(function() {
 
 				while(matches) {
 				    var all = matches[0];
-				    var pre = matches[1]; // a 与href之间
+					const pre = matches[1]; // a 与href之间
 				    var fileId = matches[2];
-				    var back = matches[3] // href与>之间
+					const back = matches[3]; // href与>之间
 				    var title = matches[4];
 
 				    allMatchs.push({
@@ -288,28 +288,28 @@ define(function() {
 		},
 
 		fixFiles: function (note, callback) {
-			var me = this;
+			const me = this;
 
-			var content = note.Content;
-			
-			var allImages = me.findAllImages(note) || [];
-			var allAttachs = me.findAllAttachs(note) || [];
+			let content = note.Content;
 
-			var allMatchs = allImages.concat(allAttachs);
+			const allImages = me.findAllImages(note) || [];
+			const allAttachs = me.findAllAttachs(note) || [];
 
-			if (allMatchs.length == 0) {
+			const allMatchs = allImages.concat(allAttachs);
+
+			if (allMatchs.length === 0) {
 				callback(content, []);
 				return;
 			}
 
-			var files = {}; // fileId => {}
+			const files = {}; // fileId => {}
 
 			function replaceContent () {
-				for (var i = 0; i < allMatchs.length; ++i) {
-					var eachMatch = allMatchs[i];
-					var fileInfo = files[eachMatch.fileId];
+				for (let i = 0; i < allMatchs.length; ++i) {
+					const eachMatch = allMatchs[i];
+					const fileInfo = files[eachMatch.fileId];
 
-					var link;
+					let link;
 					if (!fileInfo) {
 						link = '';
 					}
@@ -342,9 +342,9 @@ define(function() {
 			}
 
 			// 附件
-			var attachs = note.Attachs || [];
+			const attachs = note.Attachs || [];
 			for (var i = 0; i < attachs.length; ++i) {
-				var attach = attachs[i];
+				const attach = attachs[i];
 				var base64AndMd5 = Api.fileService.getFileBase64AndMd5(attach.Path);
 				if (base64AndMd5) {
 					files[attach.FileId] = {
@@ -359,10 +359,10 @@ define(function() {
 			}
 
 			// 得到图片资源
-			var fileIdFixed = {};
+			const fileIdFixed = {};
 			async.eachSeries(allImages, function(eachMatch, cb) {
-			    var fileId = eachMatch.fileId;
-			    if (fileIdFixed[fileId]) {
+				const fileId = eachMatch.fileId;
+				if (fileIdFixed[fileId]) {
 			    	cb();
 			    	return;
 			    }
@@ -370,7 +370,7 @@ define(function() {
 			    Api.fileService.getImageInfo(fileId, function(err, doc) {
 					fileIdFixed[fileId] = true;
 					if(doc) {
-						var base64AndMd5 = Api.fileService.getFileBase64AndMd5(doc.Path);
+						const base64AndMd5 = Api.fileService.getFileBase64AndMd5(doc.Path);
 						if (base64AndMd5) {
 							files[doc.FileId] = {
 								base64: base64AndMd5.base64,
@@ -397,11 +397,11 @@ define(function() {
 
 		// 得到可用的文件名, 避免冲突
 		getExportedFilePath: function(pathInfo, n, cb) {
-			var me = this;
+			const me = this;
 			if(n > 1) {
 				pathInfo.nameNotExt = pathInfo.nameNotExtRaw + '-' + n; 
 			}
-			var absPath = pathInfo.getFullPath();
+			const absPath = pathInfo.getFullPath();
 
 			// Api.NodeFs.existsSync(absPath) 总是返回false, 不知道什么原因
 			// 在控制台上是可以的
@@ -417,7 +417,7 @@ define(function() {
 
 		getTargetPath: function(callback) {
 			// showSaveDialog 不支持property选择文件夹
-			var po = Api.gui.dialog.showOpenDialog(Api.gui.getCurrentWindow(), 
+			const po = Api.gui.dialog.showOpenDialog(Api.gui.getCurrentWindow(),
 				{
 					defaultPath: Api.getDefaultPath(),
 					properties: ['openDirectory']
@@ -440,14 +440,47 @@ define(function() {
 		loadingIsClosed: false,
 
 		exportLeanoteForNotebook: function (notebookId) {
-			var me = this;
+			const me = this;
 			if (!notebookId) {
 				return;
 			}
-			me.getTargetPath(function(targetPath) {
+
+            // 创建一个内部函数来处理目录选择和检查
+            function tryExport(targetPath) {
 				if (!targetPath) {
 					return;
 				}
+
+                // 直接获取笔记本信息
+                let notebook = Api.notebook.getNotebook(notebookId);
+                // 创建以笔记本名称命名的子文件夹
+                let notebookName = me.fixFilename(notebook.Title);
+                let newPath = targetPath + '/' + notebookName;
+
+                // 检查目标路径是否存在同名文件或文件夹
+                try {
+                    if (Api.NodeFs.existsSync(newPath)) {
+                        // 弹出警告对话框
+                        Api.gui.dialog.showMessageBoxSync(Api.gui.getCurrentWindow(), {
+                            type: 'warning',
+                            buttons: ['确定'],
+                            title: '警告',
+                            message: '目录 "' + notebookName + '" 已存在，请选择其他目录保存。'
+                        });
+                        // 重新调用getTargetPath让用户选择新目录
+                        me.getTargetPath(function (newTargetPath) {
+                            tryExport(newTargetPath);
+                        });
+                        return;
+                    }
+
+                    // 创建新目录
+                    Api.NodeFs.mkdirSync(newPath);
+                    targetPath = newPath;
+                } catch (e) {
+                    console.error(e);
+                    return;
+                }
 
 				me.loadingIsClosed = false;
 				Api.loading.show(Api.getMsg('plugin.export_leanote.Exporting'), 
@@ -462,15 +495,57 @@ define(function() {
 				}});
 				Api.loading.setProgress(1);
 
+                // 递归处理笔记本及其子笔记本
+                function processNotebook(notebookId, currentPath) {
+                    return new Promise((resolve) => {
+                        let allNotes = [];
+                        let currentNotebook = Api.notebook.getNotebook(notebookId);
+
+                        // 获取当前笔记本的所有笔记
 				Api.noteService.getNotes(notebookId, function(notes) {
-					if (!notes) {
-						me.hideLoading();
+                            if (notes) {
+                                allNotes = allNotes.concat(notes);
+                            }
+
+                            // 获取子笔记本
+                            let children = Api.notebook.getSubNotebooks(notebookId);
+                            if (!children || children.length === 0) {
+                                resolve({notes: allNotes, total: allNotes.length});
+                                return;
+                            }
+
+                            // 处理每个子笔记本
+                            let processed = 0;
+                            children.forEach(function (child) {
+                                // 为子笔记本创建文件夹
+                                let childPath = currentPath + '/' + me.fixFilename(child.Title);
+                                try {
+                                    if (!Api.NodeFs.existsSync(childPath)) {
+                                        Api.NodeFs.mkdirSync(childPath);
+                                    }
+                                } catch (e) {
+                                    console.error(e);
 						return;
 					}
 
-					var total = notes.length;
-					var i = 0;
-					async.eachSeries(notes, function(note, cb) {
+                                // 递归处理子笔记本
+                                processNotebook(child.NotebookId, childPath).then(function (result) {
+                                    allNotes = allNotes.concat(result.notes);
+                                    processed++;
+                                    if (processed === children.length) {
+                                        resolve({notes: allNotes, total: allNotes.length});
+                                    }
+                                });
+                            });
+                        });
+                    });
+                }
+
+                // 开始处理整个笔记本树
+                processNotebook(notebookId, targetPath).then(function (result) {
+                    const total = result.notes.length;
+					let i = 0;
+                    async.eachSeries(result.notes, function (note, cb) {
 						if (me.loadingIsClosed) {
 							cb();
 							me.hideLoading();
@@ -478,7 +553,23 @@ define(function() {
 						}
 						i++;
 						Api.loading.setProgress(100 * i / total);
-						me._exportLeanote(note, targetPath, function() {
+
+                        // 确定笔记保存的路径
+                        let noteNotebook = Api.notebook.getNotebook(note.NotebookId);
+                        let notePath = targetPath;
+                        if (noteNotebook.NotebookId !== notebookId) {
+                            // 构建完整的路径
+                            let path = [];
+                            let current = noteNotebook;
+                            while (current && current.NotebookId !== notebookId) {
+                                path.unshift(me.fixFilename(current.Title));
+                                // 使用 ParentNotebookId 获取父笔记本
+                                current = Api.notebook.getNotebook(current.ParentNotebookId);
+                            }
+                            notePath = targetPath + '/' + path.join('/');
+                        }
+
+                        me._exportLeanote(note, notePath, function () {
 							cb();
 		        		}, i, total);
 					}, function() {
@@ -486,6 +577,11 @@ define(function() {
 						Notify.show({title: 'Info', body: getMsg('plugin.export_leanote.exportSuccess')});
 					});
 				});
+            }
+
+            // 初始调用
+            me.getTargetPath(function (targetPath) {
+                tryExport(targetPath);
 			});
 		},
 
@@ -496,8 +592,8 @@ define(function() {
 		},
 
 		exportLeanote: function (noteIds) {
-			var me = this;
-			if (!noteIds || noteIds.length == 0) {
+			const me = this;
+			if (!noteIds || noteIds.length === 0) {
 				return;
 			}
 			me.getTargetPath(function(targetPath) {
@@ -518,8 +614,8 @@ define(function() {
 				}});
 				Api.loading.setProgress(1);
 
-				var i = 0;
-				var total = noteIds.length;
+				let i = 0;
+				const total = noteIds.length;
 
 				async.eachSeries(noteIds, function(noteId, cb) {
 					if (me.loadingIsClosed) {
@@ -543,7 +639,7 @@ define(function() {
 		},
 
 		_exportLeanote: function(note, path, callback, i, total) {
-			var me = this;
+			const me = this;
 			if(!note) {
 				return;
 			}
@@ -558,15 +654,15 @@ define(function() {
 				Api.loading.setProgressRate(i + '/' + total);
 			}, 100);
 
-			var name = note.Title ? note.Title + '.leanote' : getMsg('Untitled') + '.leanote';
+			let name = note.Title ? note.Title + '.leanote' : getMsg('Untitled') + '.leanote';
 			name = me.fixFilename(name);
 
-			var targetPath = path + Api.commonService.getPathSep() + name;
+			const targetPath = path + Api.commonService.getPathSep() + name;
 
 			// 将路径和名字区分开
-			var pathInfo = Api.commonService.splitFile(targetPath);
+			const pathInfo = Api.commonService.splitFile(targetPath);
 			pathInfo.nameNotExt = me.fixFilename(pathInfo.nameNotExt); // 重新修正一次
-			var nameNotExt = pathInfo.nameNotExt;
+			const nameNotExt = pathInfo.nameNotExt;
 			pathInfo.nameNotExtRaw = pathInfo.nameNotExt;
 
 			// 得到可用文件的绝对路径
@@ -580,22 +676,22 @@ define(function() {
 
 		// 打开前要执行的
 		onOpen: function() {
-			var me = this;
-			var gui = Api.gui;
+			const me = this;
+			const gui = Api.gui;
 
-		    var menu = {
-		        label: Api.getMsg('plugin.export_leanote.export'),
-		        enabled: function(noteIds) {
-		        	return true;
-		        },
-		        click: (function() {
-		        	return function(noteIds) {
-		        		me.init();
-		        		me.exportLeanote(noteIds);
-		        	}
-		        })()
-		    };
-		    Api.addExportMenu(menu);
+			const menu = {
+				label: Api.getMsg('plugin.export_leanote.export'),
+				enabled: function (noteIds) {
+					return true;
+				},
+				click: (function () {
+					return function (noteIds) {
+						me.init();
+						me.exportLeanote(noteIds);
+					}
+				})()
+			};
+			Api.addExportMenu(menu);
 
 		    Api.addExportMenuForNotebook({
 		        label: Api.getMsg('plugin.export_leanote.export'),
@@ -617,6 +713,4 @@ define(function() {
 		onClose: function() {
 		}
 	};
-
-	return exportLeanote;
 });

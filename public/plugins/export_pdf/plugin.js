@@ -361,7 +361,6 @@ define(function() {
                     i++;
                     Api.loading.setProgress(100 * i / total);
                     Api.noteService.getNote(noteId, function (note) {
-
                         me._exportPDF(note, targetPath, function (ok) {
                             cb();
                         }, i, total);
@@ -460,5 +459,4 @@ define(function() {
         onClose: function () {
         }
     };
-
 });

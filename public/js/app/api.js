@@ -1,5 +1,5 @@
 // 只有api的插件才能访问
-var Api = {
+const Api = {
     notebook: Notebook,
     note: Note,
     tag: Tag,
@@ -23,7 +23,7 @@ var Api = {
 
     // 打开本地目录
     // mac和windows下不同
-    openLocalDir: function(dir) {
+    openLocalDir: function (dir) {
         if (isMac()) {
             gui.Shell.showItemInFolder(dir);
         } else {
@@ -32,26 +32,26 @@ var Api = {
     },
 
     // 得到当前版本
-    getCurVersion: function(callback) {
-        var me = this;
-        var vFile = me.evtService.getProjectBasePath() + '/data/version';
+    getCurVersion: function (callback) {
+        const me = this;
+        const vFile = me.evtService.getProjectBasePath() + '/data/version';
         // fs.writeFileSync('./output.json',JSON.stringify({a:1,b:2}));
         try {
-            var v = JSON.parse(fs.readFileSync(vFile));
+            const v = JSON.parse(fs.readFileSync(vFile));
             return v;
         } catch (e) {
             return false;
         }
     },
 
-    getConfigFilePath: function() {
-        var me = this;
+    getConfigFilePath: function () {
+        const me = this;
         return me.evtService.getProjectBasePath() + '/public/config.js';
     },
-    writeConfig: function(config) {
-        var me = this;
-        var fileData = "var Config = " + JSON.stringify(config, null, 4) + ';';
-        var ok = me.commonService.writeFile(me.getConfigFilePath(), fileData);
+    writeConfig: function (config) {
+        const me = this;
+        const fileData = "var Config = " + JSON.stringify(config, null, 4) + ';';
+        const ok = me.commonService.writeFile(me.getConfigFilePath(), fileData);
         return ok;
     },
 
@@ -68,43 +68,43 @@ var Api = {
     curLang: curLang,
     defaultLang: 'en-us',
     // 添加语言包
-    addLangMsgs: function(data, prefix) {
-        var me = this;
+    addLangMsgs: function (data, prefix) {
+        const me = this;
         if (!data) {
             return;
         }
         if (prefix) {
             prefix += '.'; // prefix.
         }
-        for (var lang in data) {
-            var msgs = data[lang] || {};
+        for (let lang in data) {
+            const msgs = data[lang] || {};
             me._langs[lang] || (me._langs[lang] = {});
-            for (var key in msgs) {
+            for (let key in msgs) {
                 me._langs[lang][prefix + key] = msgs[key];
             }
         }
     },
-    isArray: function(obj) {
+    isArray: function (obj) {
         return Object.prototype.toString.call(obj) === '[object Array]';
     },
     // 国际化
-    getMsg: function(key, prefix, data) {
-        var me = this;
+    getMsg: function (key, prefix, data) {
+        const me = this;
         if (!key) {
             return '';
         }
-        var rawKey = key;
+        const rawKey = key;
         if (prefix) {
             key = prefix + '.' + key;
         }
 
-        var msg = me._langs[me.curLang][key] || me._langs[me.defaultLang][key] || rawKey;
+        let msg = me._langs[me.curLang][key] || me._langs[me.defaultLang][key] || rawKey;
 
         if (data) {
             if (!me.isArray(data)) {
                 data = [data];
             }
-            for (var i = 0; i < data.length; ++i) {
+            for (let i = 0; i < data.length; ++i) {
                 msg = msg.replace("%s", data[i]);
             }
         }
@@ -112,101 +112,101 @@ var Api = {
     },
 
     // 与之前lang.js取出的数据合并
-    _init: function() {
-        var me = this;
+    _init: function () {
+        const me = this;
         me._langs[me.curLang] || (me._langs[me.curLang] = {});
         $.extend(me._langs[me.curLang], window.langData);
 
         // extend
-        window.getMsg = function(key, prefix, data) {
+        window.getMsg = function (key, prefix, data) {
             return me.getMsg(key, prefix, data);
         };
     },
 
-    _callOpenAfter: function() {
+    _callOpenAfter: function () {
 
     },
 
     _themeMenu: null,
-    getThemeMenu: function() {
-        var me = this;
+    getThemeMenu: function () {
+        const me = this;
         return me._themeMenu;
     },
-    setThemeMenu: function(menus) {
-        var me = this;
+    setThemeMenu: function (menus) {
+        const me = this;
         me._themeMenu = menus;
     },
 
     // markdown theme
     _mdThemeMenu: null,
-    getMdThemeMenu: function() {
-        var me = this;
+    getMdThemeMenu: function () {
+        const me = this;
         return me._mdThemeMenu;
     },
-    setMdThemeMenu: function(menus) {
-        var me = this;
+    setMdThemeMenu: function (menus) {
+        const me = this;
         me._mdThemeMenu = menus;
     },
 
     _importMenus: [],
-    addImportMenu: function(menu) {
-        var me = this;
+    addImportMenu: function (menu) {
+        const me = this;
         me._importMenus.push(menu);
     },
-    getImportMenus: function() {
-        var me = this;
+    getImportMenus: function () {
+        const me = this;
         return me._importMenus;
     },
     // 添加用户menu
-    addUserMenu: function(menus, pos) {
+    addUserMenu: function (menus, pos) {
 
 
     },
-    addNotebookMenu: function(menu, pos) {
+    addNotebookMenu: function (menu, pos) {
 
     },
-    addTrashMenu: function(menu, pos) {
+    addTrashMenu: function (menu, pos) {
 
     },
 
     // 导出
     _exportMenus: [],
-    addExportMenu: function(menu) {
-        var me = this;
+    addExportMenu: function (menu) {
+        const me = this;
         me._exportMenus.push(menu);
     },
-    getExportMenus: function() {
-        var me = this;
+    getExportMenus: function () {
+        const me = this;
         return me._exportMenus;
     },
 
     // 导出, 笔记本下
     _exportMenusForNotebook: [],
-    addExportMenuForNotebook: function(menu) {
-        var me = this;
+    addExportMenuForNotebook: function (menu) {
+        const me = this;
         me._exportMenusForNotebook.push(menu);
     },
-    getExportMenusForNotebook: function() {
-        var me = this;
+    getExportMenusForNotebook: function () {
+        const me = this;
         return me._exportMenusForNotebook;
     },
 
     // 更多菜单
     _moreMenus: [],
-    getMoreMenus: function() {
-        var me = this;
+    getMoreMenus: function () {
+        const me = this;
         return me._moreMenus;
     },
-    addMoreMenu: function(menu) {
-        var me = this;
+    addMoreMenu: function (menu) {
+        const me = this;
         me._moreMenus.push(menu);
     },
 
     _lastPath: null,
-    getDefaultPath () {
+    getDefaultPath() {
         return this._lastPath || this.gui.app.getPath('userDesktop')
     },
-    saveLastPath (dir, filePath) {
+    saveLastPath(dir, filePath) {
         this._lastPath = dir || this.NodePath.dirname(filePath)
     }
 };
@@ -217,27 +217,27 @@ var Api = {
 $.extend(Api, {
     _eventCallbacks: {},
     _listen: function(type, callback) {
-        var callbacks = this._eventCallbacks[type] || (this._eventCallbacks[type] = []);
+        const callbacks = this._eventCallbacks[type] || (this._eventCallbacks[type] = []);
         callbacks.push(callback);
     },
     // on('a b', function(params) {})
     on: function(name, callback) {
-        var names = name.split(/\s+/);
-        for (var i = 0; i < names.length; ++i) {
+        const names = name.split(/\s+/);
+        for (let i = 0; i < names.length; ++i) {
             this._listen(names[i], callback);
         }
         return this;
     },
     // off('a b', function(params) {})
     off: function(name, callback) {
-        var types = name.split(/\s+/);
-        var i, j, callbacks, removeIndex;
+        const types = name.split(/\s+/);
+        let i, j, callbacks, removeIndex;
         for (i = 0; i < types.length; i++) {
             callbacks = this._eventCallbacks[types[i].toLowerCase()];
             if (callbacks) {
                 removeIndex = null;
                 for (j = 0; j < callbacks.length; j++) {
-                    if (callbacks[j] == callback) {
+                    if (callbacks[j] === callback) {
                         removeIndex = j;
                     }
                 }
@@ -249,11 +249,11 @@ $.extend(Api, {
     },
     // LEA.trigger('a', {});
     trigger: function(type, params) {
-        var callbacks = this._eventCallbacks[type] || [];
+        const callbacks = this._eventCallbacks[type] || [];
         if (callbacks.length === 0) {
             return;
         }
-        for (var i = 0; i < callbacks.length; i++) {
+        for (let i = 0; i < callbacks.length; i++) {
             callbacks[i].call(this, params);
         }
     }

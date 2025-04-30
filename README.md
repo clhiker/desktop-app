@@ -61,3 +61,10 @@ GNU General Public License for more details.
 
 Leanote destop app is licensed under the GPL v2.
 ```
+
+Todo List
+
+1. - [x] 更新代码引用库到最新版本，修复依赖报错
+2. - [ ] 文件夹导入导出功能
+   1. - [ ] 导出保存目录结构，包括顶层目录和子目录
+   2. - [ ] 导入保存原结构

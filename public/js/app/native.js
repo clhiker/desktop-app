@@ -1,6 +1,6 @@
 // 本地api集成
 function isURL(str_url) {
-    var re = new RegExp("^((https|http|ftp|rtsp|mms|emailto)://).+");
+    const re = new RegExp("^((https|http|ftp|rtsp|mms|emailto)://).+");
     return re.test(str_url);
 }
 
@@ -16,11 +16,11 @@ function isMac() {
 // 窗口大小设置
 // var win = gui.Window.get();
 
-var downloadImgPath;
+let downloadImgPath;
 $(function() {
 
-	var isMacP = isMac();
-    
+    const isMacP = isMac();
+
     // mac上才会自己控制
 	$('.tool-close, .tool-close-blur').click(function() {
         onClose(function() {
@@ -112,7 +112,7 @@ function Menu() {
         click: function() {
             // document.execCommand("selectAll");
             // document.execCommand('paste');
-            var src = $curTarget.attr('src');
+            const src = $curTarget.attr('src');
             if(!src) {
             	alert(getMsg('Error'));
             	return;
@@ -120,9 +120,9 @@ function Menu() {
             // 得到图片, 打开dialog
             FileService.downloadImg(src, function(curPath) {
             	if(curPath) {
-            		var paths = curPath.split(/\/|\\/);
-            		var name = paths[paths.length-1] || "Untitled.png";
-            		downloadImgPath = curPath;
+                    const paths = curPath.split(/[\/\\]/);
+                    const name = paths[paths.length - 1] || "Untitled.png";
+                    downloadImgPath = curPath;
 
             		// title不能设置
             		gui.dialog.showSaveDialog(
@@ -184,22 +184,22 @@ Menu.prototype.canOpenInBroswer = function(bool) {
 Menu.prototype.popup = function(x, y) {
     this.menu.popup(gui.getCurrentWindow(), x, y);
 };
-var menu = new Menu();
+const menu = new Menu();
 
 // 右键菜单
 var winHref = '';
 var $curTarget;
-var openContextmenu = function (e, canCut2, canPaste2) {
+const openContextmenu = function (e, canCut2, canPaste2) {
     e.preventDefault();
-    var $target = $(e.target);
+    const $target = $(e.target);
     $curTarget = $target;
-    var text = $target.text();
+    const text = $target.text();
     winHref = $target.attr('href');
-    if(!winHref) {
+    if (!winHref) {
         winHref = text;
     }
     // 判断是否满足http://leanote.com
-    if(winHref) {
+    if (winHref) {
         if (winHref.indexOf('http://127.0.0.1') < 0 && isURL(winHref)) {
         } else {
             winHref = false;
@@ -208,16 +208,16 @@ var openContextmenu = function (e, canCut2, canPaste2) {
 
     menu.canOpenInBroswer(!!winHref);
     menu.canSaveAs($target.is('img') && $target.attr('src'));
-    var selectionType = window.getSelection().type.toUpperCase();
+    const selectionType = window.getSelection().type.toUpperCase();
     // var clipData = gui.Clipboard.get().get();
     // menu.canPaste(clipData.length > 0);
 
-    var canPaste = true;
-    var canCut = true;
+    let canPaste = true;
+    let canCut = true;
 
     // 如果
-    if($target.closest('#editor').length > 0 || $target.closest('#mdEditor').length > 0) {
-        if(Note.readOnly) {
+    if ($target.closest('#editor').length > 0 || $target.closest('#mdEditor').length > 0) {
+        if (Note.readOnly) {
             canPaste = false;
             canCut = false;
         }

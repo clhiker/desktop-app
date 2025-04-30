@@ -6,7 +6,7 @@ Notebook.notebookNavForListNote = ""; // html 为了note list上面和新建时�
 
 // 设置缓存
 Notebook.setCache = function(notebook) {
-    var notebookId = notebook.NotebookId;
+    const notebookId = notebook.NotebookId;
     if (!notebookId) {
         return;
     }
@@ -30,7 +30,7 @@ Notebook.getCurNotebook = function() {
 Notebook._newNotebookNumberNotes = {}; // notebookId => count
 Notebook._subNotebookNumberNotes = {};
 Notebook.reRenderNotebookNumberNotesIfIsNewNotebook = function(notebookId) {
-    var count = Notebook._newNotebookNumberNotes[notebookId];
+    const count = Notebook._newNotebookNumberNotes[notebookId];
     if (count) {
         delete Notebook._newNotebookNumberNotes[notebookId];
     } else {
@@ -40,8 +40,8 @@ Notebook.reRenderNotebookNumberNotesIfIsNewNotebook = function(notebookId) {
 };
 // 为了server Web调用
 Notebook.updateNotebookNumberNotes = function(notebookId, count) {
-    var self = this;
-    var notebook = self.getNotebook(notebookId);
+    const self = this;
+    const notebook = self.getNotebook(notebookId);
     // 为什么可能会没有? 因为可能是新加的笔记本, 此时该笔记本又有笔记, 一起同步过来
     // 可能是子笔记本, 显示不出
     // 还没显示到web上
@@ -60,8 +60,8 @@ Notebook.updateNotebookNumberNotes = function(notebookId, count) {
 
 // 笔记本的笔记数量更新
 Notebook._updateNotebookNumberNotes = function(notebookId, n) {
-    var self = this;
-    var notebook = self.getNotebook(notebookId);
+    const self = this;
+    const notebook = self.getNotebook(notebookId);
     if (!notebook) {
         return;
     }
@@ -74,13 +74,13 @@ Notebook._updateNotebookNumberNotes = function(notebookId, n) {
     }
 
     // 得到笔记本下笔记的数量, v2, 重新统计
-    var notes = Note.getNotesByNotebookId(notebookId);
-    var cnt = notes ? notes.length : 0;
+    const notes = Note.getNotesByNotebookId(notebookId);
+    let cnt = notes ? notes.length : 0;
 
     if (!cnt) {
         $("#numberNotes_" + notebookId).html(notebook.NumberNotes);
     } else {
-        if (n == -1) {
+        if (n === -1) {
             cnt += n;
         }
         if (cnt < 0) {
@@ -92,12 +92,12 @@ Notebook._updateNotebookNumberNotes = function(notebookId, n) {
 
 // addNote, copyNote, moveNote
 Notebook.incrNotebookNumberNotes = function(notebookId) {
-    var self = this;
+    const self = this;
     self._updateNotebookNumberNotes(notebookId, 1);
 };
 // moteNote, deleteNote
 Notebook.minusNotebookNumberNotes = function(notebookId) {
-    var self = this;
+    const self = this;
     self._updateNotebookNumberNotes(notebookId, -1);
 };
 
@@ -109,7 +109,7 @@ Notebook.getNotebook = function(notebookId) {
 
 // called by Note
 Notebook.getNotebookTitle = function(notebookId) {
-    var notebook = Notebook.cache[notebookId];
+    const notebook = Notebook.cache[notebookId];
     if (notebook) {
         return trimTitle(notebook.Title);
     } else {
@@ -128,22 +128,23 @@ Notebook.getNotebookTitle = function(notebookId) {
 
 // 得到下级notebooks
 Notebook.getSubNotebooks = function(parentNotebookId) {
-    var me = this;
-    var treeObj = me.tree;
+    const me = this;
+    const treeObj = me.tree;
 
-    var parentNode = treeObj.getNodeByTId(parentNotebookId);
+    const parentNode = treeObj.getNodeByTId(parentNotebookId);
     if (!parentNode) {
         return;
     }
 
-    var nextLevel = parentNode.level + 1;
+    const nextLevel = parentNode.level + 1;
 
     function filter(node) {
-        return node.level == nextLevel;
+        return node.level === nextLevel;
     }
-    var nodes = treeObj.getNodesByFilter(filter, false, parentNode);
 
-    if (nodes && nodes.length == 0) {
+    const nodes = treeObj.getNodesByFilter(filter, false, parentNode);
+
+    if (nodes && nodes.length === 0) {
         return false;
     }
     return nodes;
@@ -156,23 +157,24 @@ Notebook.getSubNotebooks = function(parentNotebookId) {
 Notebook.getSimpleTreeSetting = function(options) {
     // 添加自定义dom
     function addDiyDom(treeId, treeNode) {
-        var spaceWidth = 5;
-        var switchObj = $("#" + treeId + " #" + treeNode.tId + "_switch"),
+        const spaceWidth = 5;
+        const switchObj = $("#" + treeId + " #" + treeNode.tId + "_switch"),
             icoObj = $("#" + treeId + " #" + treeNode.tId + "_ico");
         switchObj.remove();
         icoObj.before(switchObj);
 
         if (treeNode.level > 1) {
-            var spaceStr = "<span style='display: inline-block;width:" + (spaceWidth * treeNode.level) + "px'></span>";
+            const spaceStr = "<span style='display: inline-block;width:" + (spaceWidth * treeNode.level) + "px'></span>";
             switchObj.before(spaceStr);
         }
     }
-    var onDblClick = function(e, treeId, treeNode) {
-        var notebookId = treeNode.NotebookId;
+
+    const onDblClick = function (e, treeId, treeNode) {
+        const notebookId = treeNode.NotebookId;
         options.callback(notebookId);
         $("#leanoteDialog").modal('hide');
     };
-    var setting = {
+    const setting = {
         view: {
             showLine: false,
             showIcon: false,
@@ -193,13 +195,14 @@ Notebook.getSimpleTreeSetting = function(options) {
 }
 
 Notebook.getTreeSetting = function(isSearch, isShare) {
-    var noSearch = !isSearch;
+    const noSearch = !isSearch;
 
-    var self = this;
+    const self = this;
+
     // 添加自定义dom
     function addDiyDom(treeId, treeNode) {
-        var spaceWidth = 5;
-        var switchObj = $("#" + treeId + " #" + treeNode.tId + "_switch"),
+        const spaceWidth = 5;
+        const switchObj = $("#" + treeId + " #" + treeNode.tId + "_switch"),
             icoObj = $("#" + treeId + " #" + treeNode.tId + "_ico");
         switchObj.remove();
         icoObj.before(switchObj);
@@ -211,13 +214,15 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
         }
 
         if (treeNode.level > 1) {
-            var spaceStr = "<span style='display: inline-block;width:" + (spaceWidth * treeNode.level) + "px'></span>";
+            const spaceStr = "<span style='display: inline-block;width:" + (spaceWidth * treeNode.level) + "px'></span>";
             switchObj.before(spaceStr);
         }
     }
     // 拖拽
     function beforeDrag(treeId, treeNodes) {
-        for (var i = 0, l = treeNodes.length; i < l; i++) {
+        let i = 0;
+        const l = treeNodes.length;
+        for (; i < l; i++) {
             if (treeNodes[i].drag === false) {
                 return false;
             }
@@ -230,17 +235,17 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
     }
 
     function onDrop(e, treeId, treeNodes, targetNode, moveType) {
-        var treeNode = treeNodes[0];
+        const treeNode = treeNodes[0];
         // 搜索不能drag
         if (!targetNode) {
             return;
         }
-        var parentNode;
-        var treeObj = self.tree;
-        var ajaxData = { curNotebookId: treeNode.NotebookId };
+        let parentNode;
+        const treeObj = self.tree;
+        const ajaxData = {curNotebookId: treeNode.NotebookId};
 
         // 成为子节点, 那么只需要得到targetNode下所有的子结点即可
-        if (moveType == "inner") {
+        if (moveType === "inner") {
             parentNode = targetNode;
         } else {
             parentNode = targetNode.getParentNode();
@@ -252,16 +257,16 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
             var nodes = treeObj.getNodes(); // 得到所有nodes
         } else {
             ajaxData.parentNotebookId = parentNode.NotebookId;
-            var nextLevel = parentNode.level + 1;
+            const nextLevel = parentNode.level + 1;
 
             function filter(node) {
-                return node.level == nextLevel;
+                return node.level === nextLevel;
             }
             var nodes = treeObj.getNodesByFilter(filter, false, parentNode);
         }
 
         ajaxData.siblings = [];
-        for (var i in nodes) {
+        for (let i in nodes) {
             var notebookId = nodes[i].NotebookId;
             if (!Notebook.isAllNotebookId(notebookId) && !Notebook.isTrashNotebookId(notebookId)) {
                 ajaxData.siblings.push(notebookId);
@@ -273,7 +278,7 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
 
         // 设置dirty状态
         // 不需要设置parentNotebookId
-        var ids = [ajaxData.curNotebookId].concat(ajaxData.siblings || []);
+        const ids = [ajaxData.curNotebookId].concat(ajaxData.siblings || []);
         ids.forEach(function(notebookId) {
             if (notebookId) {
                 Notebook.setDirtyOrNew(notebookId, true);
@@ -284,18 +289,18 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
         }, 100);
     }
 
-    var onClick = function(e, treeId, treeNode) {
-        var notebookId = treeNode.NotebookId;
+    const onClick = function (e, treeId, treeNode) {
+        const notebookId = treeNode.NotebookId;
         Notebook.changeNotebook(notebookId);
     };
-    var onDblClick = function(e) {
-        var notebookId = $(e.target).attr("notebookId");
+    const onDblClick = function (e) {
+        const notebookId = $(e.target).attr("notebookId");
         if (!Notebook.isAllNotebookId(notebookId) && !Notebook.isTrashNotebookId(notebookId)) {
             self.updateNotebookTitle(e.target);
         }
     };
 
-    var setting = {
+    const setting = {
         view: {
             showLine: false,
             showIcon: false,
@@ -326,14 +331,14 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
             onDrop: onDrop,
             onClick: onClick,
             onDblClick: onDblClick,
-            onExpand: function(event, treeId, treeNode) {
+            onExpand: function (event, treeId, treeNode) {
                 // 展开时, 会有子笔记本, 如果之前有设置数量, 则重新设置
                 // 为了防止移动, 复制过来时没有该sub
                 if (treeNode.isParent) {
-                    var childNotes = self.getSubNotebooks(treeNode.NotebookId);
+                    const childNotes = self.getSubNotebooks(treeNode.NotebookId);
                     if (childNotes) {
-                        childNotes.forEach(function(node) {
-                            var notebookId = node.NotebookId;
+                        childNotes.forEach(function (node) {
+                            const notebookId = node.NotebookId;
                             if (Notebook._subNotebookNumberNotes[notebookId] !== undefined) {
                                 $('#numberNotes_' + notebookId).html(Notebook._subNotebookNumberNotes[notebookId]);
                                 Notebook._subNotebookNumberNotes[notebookId] = undefined;
@@ -344,8 +349,8 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
                     }
                 }
             },
-            beforeRename: function(treeId, treeNode, newName, isCancel) {
-                if (newName == "") {
+            beforeRename: function (treeId, treeNode, newName, isCancel) {
+                if (newName === "") {
                     if (treeNode.IsNew) {
                         // 删除之
                         self.tree.removeNode(treeNode);
@@ -353,14 +358,14 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
                     }
                     return false;
                 }
-                if (treeNode.Title == newName) {
+                if (treeNode.Title === newName) {
                     return true;
                 }
 
                 // 如果是新添加的
                 if (treeNode.IsNew) {
-                    var parentNode = treeNode.getParentNode();
-                    var parentNotebookId = parentNode ? parentNode.NotebookId : "";
+                    const parentNode = treeNode.getParentNode();
+                    const parentNotebookId = parentNode ? parentNode.NotebookId : "";
 
                     self.doAddNotebook(treeNode.NotebookId, newName, parentNotebookId);
                 } else {
@@ -377,22 +382,24 @@ Notebook.getTreeSetting = function(isSearch, isShare) {
 Notebook.allNotebookId = "0";
 Notebook.trashNotebookId = "-1";
 Notebook.curNotebookIsTrashOrAll = function() {
-    return Notebook.curNotebookId == Notebook.trashNotebookId || Notebook.curNotebookId == Notebook.allNotebookId;
+    return Notebook.curNotebookId === Notebook.trashNotebookId || Notebook.curNotebookId === Notebook.allNotebookId;
 };
 Notebook.curNotebookIsTrash = function() {
-    return Notebook.curNotebookId == Notebook.trashNotebookId;
+    return Notebook.curNotebookId === Notebook.trashNotebookId;
 };
 // reload 是否再一次load
 Notebook.renderNotebooks = function(notebooks, reload) {
-    var self = this;
+    const self = this;
 
     if (!notebooks || typeof notebooks != "object" || notebooks.length < 0) {
         notebooks = [];
     }
 
     // title可能有<script>
-    for (var i = 0, len = notebooks.length; i < len; ++i) {
-        var notebook = notebooks[i];
+    let i = 0;
+    const len = notebooks.length;
+    for (; i < len; ++i) {
+        const notebook = notebooks[i];
         notebook.Title = trimTitle(notebook.Title);
     }
 
@@ -403,7 +410,7 @@ Notebook.renderNotebooks = function(notebooks, reload) {
     self.tree = $.fn.zTree.init($("#notebookList"), self.getTreeSetting(), notebooks);
 
     // 展开/折叠图标
-    var $notebookList = $("#notebookList");
+    const $notebookList = $("#notebookList");
     $notebookList.hover(function() {
         if (!$(this).hasClass("showIcon")) {
             $(this).addClass("showIcon");
@@ -430,9 +437,9 @@ Notebook.renderNotebooks = function(notebooks, reload) {
 };
 
 Notebook.cacheAllNotebooks = function(notebooks) {
-    var self = this;
-    for (var i in notebooks) {
-        var notebook = notebooks[i];
+    const self = this;
+    for (let i in notebooks) {
+        const notebook = notebooks[i];
         Notebook.cache[notebook.NotebookId] = notebook;
         if (!isEmpty(notebook.Subs)) {
             self.cacheAllNotebooks(notebook.Subs);
@@ -442,20 +449,20 @@ Notebook.cacheAllNotebooks = function(notebooks) {
 
 // 展开到笔记本
 Notebook.expandNotebookTo = function(notebookId, userId) {
-    var me = this;
-    var selected = false;
-    var tree = me.tree;
+    const me = this;
+    let selected = false;
+    const tree = me.tree;
 
     // 共享的
     if (userId) {
         return;
     }
-    var curNode = tree.getNodeByTId(notebookId);
+    let curNode = tree.getNodeByTId(notebookId);
     if (!curNode) {
         return;
     }
     while (true) {
-        var pNode = curNode.getParentNode();
+        const pNode = curNode.getParentNode();
         if (pNode) {
             tree.expandNode(pNode, true);
             if (!selected) {
@@ -477,20 +484,20 @@ Notebook.expandNotebookTo = function(notebookId, userId) {
 // nav 为了新建, 快速选择, 移动笔记
 // 这些在添加,修改,删除notebooks都要变动!!!
 Notebook.renderNav = function(nav) {
-    var self = this;
+    const self = this;
     self.changeNav();
 };
 
 // 搜索notebook
 Notebook.searchNotebookForAddNote = function(key) {
-    var self = this;
+    const self = this;
     if (key) {
-        var notebooks = self.tree.getNodesByParamFuzzy("Title", key);
+        let notebooks = self.tree.getNodesByParamFuzzy("Title", key);
         notebooks = notebooks || [];
         // 过滤下, 把new, trash过滤掉
-        var notebooks2 = [];
-        for (var i in notebooks) {
-            var notebookId = notebooks[i].NotebookId;
+        const notebooks2 = [];
+        for (let i in notebooks) {
+            const notebookId = notebooks[i].NotebookId;
             if (!self.isAllNotebookId(notebookId) && !self.isTrashNotebookId(notebookId)) {
                 notebooks2.push(notebooks[i]);
             }
@@ -500,20 +507,20 @@ Notebook.searchNotebookForAddNote = function(key) {
 
 // 搜索notebook
 Notebook.searchNotebookForList = function(key) {
-    var self = this;
-    var $search = $("#notebookListForSearch");
-    var $notebookList = $("#notebookList");
+    const self = this;
+    const $search = $("#notebookListForSearch");
+    const $notebookList = $("#notebookList");
     if (key) {
         $search.show();
         $notebookList.hide();
 
-        var notebooks = self.tree.getNodesByParamFuzzy("Title", key);
+        const notebooks = self.tree.getNodesByParamFuzzy("Title", key);
         log('search');
         log(notebooks);
         if (isEmpty(notebooks)) {
             $search.html("");
         } else {
-            var setting = self.getTreeSetting(true);
+            const setting = self.getTreeSetting(true);
             self.tree2 = $.fn.zTree.init($search, setting, notebooks);
         }
     } else {
@@ -525,11 +532,11 @@ Notebook.searchNotebookForList = function(key) {
 
 Notebook.everNotebooks = [];
 Notebook.changeNav = function() {
-    var self = Notebook;
-    var notebooks = Notebook.tree.getNodes();
-    var pureNotebooks = []; // 不含新和垃圾
-    for (var i = 0; i < notebooks.length; ++i) {
-        var notebookId = notebooks[i].NotebookId;
+    const self = Notebook;
+    const notebooks = Notebook.tree.getNodes();
+    const pureNotebooks = []; // 不含新和垃圾
+    for (let i = 0; i < notebooks.length; ++i) {
+        const notebookId = notebooks[i].NotebookId;
         if (Notebook.isAllNotebookId(notebookId) || Notebook.isTrashNotebookId(notebookId)) {} else {
             pureNotebooks.push(notebooks[i]);
         }
@@ -568,23 +575,23 @@ Notebook.renderShareNotebooks = function(sharedUserInfos, shareNotebooks) {
         return;
     }
 
-    var $shareNotebooks = $("#shareNotebooks");
-    var user2ShareNotebooks = {};
+    const $shareNotebooks = $("#shareNotebooks");
+    const user2ShareNotebooks = {};
     for (var i in shareNotebooks) {
         var userNotebooks = shareNotebooks[i];
         user2ShareNotebooks[userNotebooks.UserId] = userNotebooks;
     }
     for (var i in sharedUserInfos) {
-        var userInfo = sharedUserInfos[i];
+        const userInfo = sharedUserInfos[i];
         var userNotebooks = user2ShareNotebooks[userInfo.UserId] || { ShareNotebooks: [] };
 
         userNotebooks.ShareNotebooks = [{ NotebookId: "-2", Title: "默认共享" }].concat(userNotebooks.ShareNotebooks)
 
-        var username = userInfo.Username || userInfo.Email;
-        var header = tt('<div class="folderNote closed"><div class="folderHeader"><a><h1 title="? 的共享"><i class="fa fa-angle-right"></i>?</h1></a></div>', username, username);
-        var body = '<ul class="folderBody">';
-        for (var j in userNotebooks.ShareNotebooks) {
-            var notebook = userNotebooks.ShareNotebooks[j];
+        const username = userInfo.Username || userInfo.Email;
+        const header = tt('<div class="folderNote closed"><div class="folderHeader"><a><h1 title="? 的共享"><i class="fa fa-angle-right"></i>?</h1></a></div>', username, username);
+        let body = '<ul class="folderBody">';
+        for (let j in userNotebooks.ShareNotebooks) {
+            const notebook = userNotebooks.ShareNotebooks[j];
             body += tt('<li><a notebookId="?">?</a></li>', notebook.NotebookId, notebook.Title)
         }
         body += "</ul>";
@@ -652,7 +659,7 @@ Notebook.changeNotebookNav = function(notebookId) {
     // 1 改变当前的notebook
     Notebook.selectNotebook($(tt('#notebook [notebookId="?"]', notebookId)));
 
-    var notebook = Notebook.cache[notebookId];
+    const notebook = Notebook.cache[notebookId];
 
     if (!notebook) {
         return;
@@ -666,10 +673,10 @@ Notebook.changeNotebookNav = function(notebookId) {
 };
 
 Notebook.isAllNotebookId = function(notebookId) {
-    return notebookId == Notebook.allNotebookId;
+    return notebookId === Notebook.allNotebookId;
 };
 Notebook.isTrashNotebookId = function(notebookId) {
-    return notebookId == Notebook.trashNotebookId;
+    return notebookId === Notebook.trashNotebookId;
 };
 // 当前选中的笔记本是否是"所有"
 // called by Note
@@ -691,7 +698,7 @@ Notebook.renderCurNotebook = function() {
     // callback Pjax, 当popstate时调用
 Notebook.changeNotebookSeq = 1;
 Notebook.changeNotebook = function(notebookId, callback, needRendNoteId) {
-    var me = this;
+    const me = this;
 
     // 如果找不到
     if (!Notebook.cache[notebookId]) {
@@ -708,9 +715,9 @@ Notebook.changeNotebook = function(notebookId, callback, needRendNoteId) {
     // 2 先清空所有
     Note.clearAll();
 
-    var url = "/note/listNotes/";
-    var param = { notebookId: notebookId };
-    var cacheNotes = null;
+    let url = "/note/listNotes/";
+    let param = {notebookId: notebookId};
+    let cacheNotes = null;
     // 废纸篓
     if (Notebook.isTrashNotebookId(notebookId)) {
         url = "/note/listTrashNotes";
@@ -730,15 +737,15 @@ Notebook.changeNotebook = function(notebookId, callback, needRendNoteId) {
         }
     } else {
         cacheNotes = Note.getNotesByNotebookId(notebookId);
-        var notebook = Notebook.cache[notebookId];
+        const notebook = Notebook.cache[notebookId];
         notebook.Title = trimTitle(notebook.Title);
         if (!notebook) {
             return;
         }
-        var len = cacheNotes ? cacheNotes.length : 0;
+        const len = cacheNotes ? cacheNotes.length : 0;
 
         // 如果为0, 从服务器上拿
-        if (len != 0 && len == notebook.NumberNotes) {
+        if (len !== 0 && len === notebook.NumberNotes) {
             if (callback) {
                 callback(cacheNotes);
             } else {
@@ -757,9 +764,9 @@ Notebook.changeNotebook = function(notebookId, callback, needRendNoteId) {
     me.showNoteAndEditorLoading();
     me.changeNotebookSeq++;
     (function(seq) {
-        var callback2 = function(cacheNotes) {
+        const callback2 = function (cacheNotes) {
             // 后面点击过快, 之前的结果不要了
-            if (seq != me.changeNotebookSeq) {
+            if (seq !== me.changeNotebookSeq) {
                 log("notebook changed too fast!");
                 log(cacheNotes);
                 return;
@@ -782,7 +789,7 @@ Notebook.changeNotebook = function(notebookId, callback, needRendNoteId) {
 
 // 改变标签, isStarred是否是星笔记本
 Notebook.changeCurNotebookTitle = function(title, isStarred, subTitle, isTag, isSearch) {
-    var me = this;
+    const me = this;
     var title = isTag ? title : trimTitle(title);
     $("#curNotebookForListNote").html(title);
     me.isStarred = isStarred;
@@ -807,7 +814,7 @@ Notebook.hideNoteAndEditorLoading = function() {
 // 还包括共享
 // called by Note
 Notebook.isCurNotebook = function(notebookId) {
-    return $(tt('#notebookList [notebookId="?"], #shareNotebooks [notebookId="?"]', notebookId, notebookId)).attr("class") == "active";
+    return $(tt('#notebookList [notebookId="?"], #shareNotebooks [notebookId="?"]', notebookId, notebookId)).attr("class") === "active";
 };
 
 // 改变nav, 为了新建note
@@ -832,17 +839,17 @@ Notebook.changeNotebookForNewNote = function(notebookId) {
 //---------------------------
 // 显示共享信息
 Notebook.listNotebookShareUserInfo = function(target) {
-        var notebookId = $(target).attr("notebookId");
-        showDialogRemote("/share/listNotebookShareUserInfo", { notebookId: notebookId });
+    const notebookId = $(target).attr("notebookId");
+    showDialogRemote("/share/listNotebookShareUserInfo", { notebookId: notebookId });
     }
     // 共享笔记本
 Notebook.shareNotebooks = function(target) {
-    var title = $(target).text();
+    const title = $(target).text();
     showDialog("dialogShareNote", { title: "分享笔记本给好友-" + title });
     setTimeout(function() {
         $("#friendsEmail").focus();
     }, 500);
-    var notebookId = $(target).attr("notebookId");
+    const notebookId = $(target).attr("notebookId");
 
     shareNoteOrNotebook(notebookId, false);
 }
@@ -850,15 +857,15 @@ Notebook.shareNotebooks = function(target) {
 //-----------------------------
 // 设为blog/unset
 Notebook.setNotebook2Blog = function(target) {
-    var notebookId = $(target).attr("notebookId");
-    var notebook = Notebook.cache[notebookId];
-    var isBlog = true;
-    if (notebook.IsBlog != undefined) {
+    const notebookId = $(target).attr("notebookId");
+    const notebook = Notebook.cache[notebookId];
+    let isBlog = true;
+    if (notebook.IsBlog !== undefined) {
         isBlog = !notebook.IsBlog;
     }
 
     // 那么, 如果当前是该notebook下, 重新渲染之
-    if (Notebook.curNotebookId == notebookId) {
+    if (Notebook.curNotebookId === notebookId) {
         if (isBlog) {
             $("#noteList .item-blog").show();
         } else {
@@ -866,11 +873,11 @@ Notebook.setNotebook2Blog = function(target) {
         }
 
         // 如果当前在所有笔记本下
-    } else if (Notebook.curNotebookId == Notebook.allNotebookId) {
+    } else if (Notebook.curNotebookId === Notebook.allNotebookId) {
         $("#noteItemList .item").each(function() {
-            var noteId = $(this).attr("noteId");
-            var note = Note.cache[noteId];
-            if (note.NotebookId == notebookId) {
+            const noteId = $(this).attr("noteId");
+            const note = Note.cache[noteId];
+            if (note.NotebookId === notebookId) {
                 if (isBlog) $(this).find(".item-blog").show();
                 else $(this).find(".item-blog").hide();
             }
@@ -889,8 +896,8 @@ Notebook.setNotebook2Blog = function(target) {
 
 // 修改笔记本标题
 Notebook.updateNotebookTitle = function(target) {
-    var self = Notebook;
-    var notebookId = $(target).attr("notebookId");
+    const self = Notebook;
+    const notebookId = $(target).attr("notebookId");
 
     if (self.tree2) {
         self.tree2.editName(self.tree2.getNodeByTId(notebookId));
@@ -912,7 +919,7 @@ Notebook.setDirtyOrNew = function(notebookId, isDirty, isNew) {
 };
 
 Notebook.setDirtyOrNewForSub = function(notebookId, isDirty, isNew) {
-    var d = this.subNotebookDirtyOrNew[notebookId];
+    const d = this.subNotebookDirtyOrNew[notebookId];
     if (!d) {
         return;
     }
@@ -920,7 +927,7 @@ Notebook.setDirtyOrNewForSub = function(notebookId, isDirty, isNew) {
 };
 
 Notebook._setDirtyOrNew = function(notebookId, isDirty, isNew) {
-    var $o = $('#' + notebookId + '_a');
+    const $o = $('#' + notebookId + '_a');
     if ($o.length) {
         isDirty ? $o.addClass('nb-dirty') : $o.removeClass('nb-dirty');
         isNew ? $o.addClass('nb-new') : $o.removeClass('nb-new');
@@ -930,7 +937,7 @@ Notebook._setDirtyOrNew = function(notebookId, isDirty, isNew) {
 };
 
 Notebook.doUpdateNotebookTitle = function(notebookId, newTitle) {
-    var self = Notebook;
+    const self = Notebook;
     newTitle = trimTitle(newTitle);
     NotebookService.updateNotebookTitle(notebookId, newTitle, function() {
         // 修改缓存
@@ -940,7 +947,7 @@ Notebook.doUpdateNotebookTitle = function(notebookId, newTitle) {
 
         // 同步
         if (self.tree2) {
-            var notebook = self.tree.getNodeByTId(notebookId);
+            const notebook = self.tree.getNodeByTId(notebookId);
             notebook.Title = newTitle;
             self.tree.updateNode(notebook); // 同步到对方
         }
@@ -951,7 +958,7 @@ Notebook.doUpdateNotebookTitle = function(notebookId, newTitle) {
 
 // 修改标题 for sync
 Notebook.renderUpdateNoteTitle = function(notebookId, newTitle) {
-    var self = this;
+    const self = this;
     // 修改缓存
     if (!Notebook.cache[notebookId]) {
         return;
@@ -960,7 +967,7 @@ Notebook.renderUpdateNoteTitle = function(notebookId, newTitle) {
     // 改变nav
     Notebook.changeNav();
 
-    var notebook = self.tree.getNodeByTId(notebookId);
+    const notebook = self.tree.getNodeByTId(notebookId);
     if (!notebook) {
         return;
     }
@@ -980,7 +987,7 @@ Notebook.renderUpdateNoteTitle = function(notebookId, newTitle) {
 // 2 在所有后面添加<li></li>
 Notebook.addNotebookSeq = 1; // inputId
 Notebook.addNotebook = function() {
-    var self = Notebook;
+    const self = Notebook;
     if ($("#myNotebooks").hasClass("closed")) {
         $("#myNotebooks .folderHeader").trigger("click");
     }
@@ -991,11 +998,11 @@ Notebook.addNotebook = function() {
 
 // rename 调用
 Notebook.doAddNotebook = function(notebookId, title, parentNotebookId) {
-    var self = Notebook;
+    const self = Notebook;
     Service.notebookService.addNotebook(notebookId, title, parentNotebookId, function(ret) {
         if (ret.NotebookId) {
             Notebook.cache[ret.NotebookId] = ret;
-            var notebook = self.tree.getNodeByTId(notebookId);
+            const notebook = self.tree.getNodeByTId(notebookId);
             $.extend(notebook, ret);
             notebook.IsNew = false;
 
@@ -1011,12 +1018,12 @@ Notebook.doAddNotebook = function(notebookId, title, parentNotebookId) {
 //-------------
 // 添加子笔记本
 Notebook.addChildNotebook = function(target) {
-    var self = Notebook;
+    const self = Notebook;
     if ($("#myNotebooks").hasClass("closed")) {
         $("#myNotebooks .folderHeader").trigger("click");
     }
 
-    var notebookId = $(target).attr("notebookId");
+    const notebookId = $(target).attr("notebookId");
 
     // 添加并修改
     self.tree.addNodes(self.tree.getNodeByTId(notebookId), { Title: "", NotebookId: getObjectId(), IsNew: true }, false, true);
@@ -1025,9 +1032,9 @@ Notebook.addChildNotebook = function(target) {
 //-------------
 // 删除
 Notebook.deleteNotebook = function(target) {
-    var self = Notebook;
+    const self = Notebook;
 
-    var notebookId = $(target).attr("notebookId");
+    const notebookId = $(target).attr("notebookId");
     if (!notebookId) {
         return;
     }
@@ -1047,7 +1054,7 @@ Notebook.deleteNotebook = function(target) {
     })
 };
 Notebook.deleteNotebookFromTree = function(notebookId) {
-    var self = this;
+    const self = this;
     self.tree.removeNode(self.tree.getNodeByTId(notebookId));
     if (self.tree2) {
         self.tree2.removeNode(self.tree2.getNodeByTId(notebookId));
@@ -1059,10 +1066,10 @@ Notebook.deleteNotebookFromTree = function(notebookId) {
 
 // 清空垃圾
 Notebook.clearTrash = function() {
-    var me = this;
+    const me = this;
     if (confirm(getMsg('Are you sure ?'))) {
         NoteService.clearTrash(function() {
-            if (Notebook.curNotebookId == Notebook.trashNotebookId) {
+            if (Notebook.curNotebookId === Notebook.trashNotebookId) {
                 Note.clearAll();
                 Note.showEditorMask();
             }
@@ -1103,12 +1110,12 @@ Notebook.fixSyncConflict = function(note, newNote) {
 // 本地 -> 添加到服务器上的
 // 前端取消dirty
 Notebook.addChanges = function(notebooks) {
-    var me = this;
+    const me = this;
     if (isEmpty(notebooks)) {
         return;
     }
-    for (var i = 0; i < notebooks.length; ++i) {
-        var notebook = notebooks[i];
+    for (let i = 0; i < notebooks.length; ++i) {
+        const notebook = notebooks[i];
         me.setDirtyOrNew(notebook.NotebookId, false, false);
     }
 };
@@ -1118,8 +1125,8 @@ Notebook.updateChanges = function(notebooks) {
 
 // 服务器adds/updates后, 一起渲染
 Notebook.reload = function() {
-    var me = this;
-    var curNotebookId = Notebook.curNotebookId;
+    const me = this;
+    const curNotebookId = Notebook.curNotebookId;
     NotebookService.getNotebooks(function(notebooks) {
         me.renderNotebooks(notebooks, true);
 
@@ -1136,13 +1143,13 @@ Notebook.reload = function() {
 // <- server 服务器端添加过来的
 // ? 如果是子先添加了, 再父添加呢?
 Notebook.addSync = function(notebooks) {
-    var me = this;
+    const me = this;
     if (isEmpty(notebooks)) {
         return;
     }
     console.log('web add sync notebook');
-    for (var i = 0; i < notebooks.length; ++i) {
-        var notebook = notebooks[i];
+    for (let i = 0; i < notebooks.length; ++i) {
+        const notebook = notebooks[i];
         Notebook.setCache(notebook);
         me.tree.addNodes(me.tree.getNodeByTId(notebook.ParentNotebookId), { Title: notebook.Title, NotebookId: notebook.NotebookId, IsNew: false }, // IsNew: false啊!!!
             true, true, false);
@@ -1152,13 +1159,13 @@ Notebook.addSync = function(notebooks) {
 // 更新
 // 不对移动做修改, 只修改标题
 Notebook.updateSync = function(notebooks) {
-    var me = this;
+    const me = this;
     if (isEmpty(notebooks)) {
         return;
     }
     log("update notebook sync");
-    for (var i in notebooks) {
-        var notebook = notebooks[i];
+    for (let i in notebooks) {
+        const notebook = notebooks[i];
         // 更新可以是本笔记本删除后, 更新的服务器版
         if (me.cache[notebook.NotebookId]) {
             me.renderUpdateNoteTitle(notebook.NotebookId, notebook.Title);
@@ -1171,13 +1178,13 @@ Notebook.updateSync = function(notebooks) {
 
 // 删除
 Notebook.deleteSync = function(notebooks) {
-    var me = this;
+    const me = this;
     if (isEmpty(notebooks)) {
         return;
     }
     log('delete notebook sync');
-    for (var i in notebooks) {
-        var notebookId = notebooks[i];
+    for (let i in notebooks) {
+        const notebookId = notebooks[i];
         // 删除
         me.deleteNotebookFromTree(notebookId);
     }
@@ -1196,7 +1203,7 @@ Notebook.init = function() {
     */
     // min
     $("#minNotebookList").on("click", "li", function() {
-        var notebookId = $(this).find("a").attr("notebookId");
+        const notebookId = $(this).find("a").attr("notebookId");
         Notebook.changeNotebook(notebookId);
     });
 
@@ -1204,7 +1211,7 @@ Notebook.init = function() {
     // 右键菜单
     function newNotebookListMenu() {
 
-        var me = this;
+        const me = this;
         this.target = '';
         this.menu = new gui.Menu();
         this.addSub = new gui.MenuItem({
@@ -1231,17 +1238,17 @@ Notebook.init = function() {
         this.menu.append(this.del);
 
         // 导入菜单
-        var importMenus = Api.getImportMenus();
+        const importMenus = Api.getImportMenus();
         if (importMenus && importMenus.length) {
-            var importSubmenus = new gui.Menu();
+            const importSubmenus = new gui.Menu();
             for (var i = 0; i < importMenus.length; ++i) {
 
                 (function(j) {
-                    var clickCallback = importMenus[j].click;
+                    const clickCallback = importMenus[j].click;
                     if (clickCallback) {
                         importMenus[i].click = function() {
-                            var notebookId = $(me.target).attr("notebookId");
-                            var notebook = Notebook.getNotebook(notebookId);
+                            const notebookId = $(me.target).attr("notebookId");
+                            const notebook = Notebook.getNotebook(notebookId);
                             clickCallback(notebook);
                         }
                     }
@@ -1258,18 +1265,18 @@ Notebook.init = function() {
         }
 
         // 导出
-        var exportsSubMenus = new gui.Menu();
-        var exportMenus = Api.getExportMenusForNotebook() || [];
+        const exportsSubMenus = new gui.Menu();
+        const exportMenus = Api.getExportMenusForNotebook() || [];
         for (var i = 0; i < exportMenus.length; ++i) {
             (function(j) {
 
-                var menu = exportMenus[j];
-                var clickBac = menu.click;
+                const menu = exportMenus[j];
+                const clickBac = menu.click;
 
-                var menuItem = new gui.MenuItem({
+                const menuItem = new gui.MenuItem({
                     label: menu.label,
-                    click: function(e) {
-                        var notebookId = $(me.target).attr('notebookId');
+                    click: function (e) {
+                        const notebookId = $(me.target).attr('notebookId');
                         clickBac && clickBac(notebookId);
                     }
                 });
@@ -1294,7 +1301,7 @@ Notebook.init = function() {
         }
         this.popup = function(e, target, isSearch) {
             me.target = target;
-            var notebookId = $(target).attr("notebookId");
+            const notebookId = $(target).attr("notebookId");
             if (Notebook.isTrashNotebookId(notebookId)) {
                 newClearTrashMenuSys.popup(e);
                 return;
@@ -1302,7 +1309,7 @@ Notebook.init = function() {
             if (Notebook.isAllNotebookId(notebookId)) {
                 return;
             }
-            var notebook = Notebook.cache[notebookId];
+            const notebook = Notebook.cache[notebookId];
             if (!notebook) {
                 return;
             }
@@ -1328,12 +1335,13 @@ Notebook.init = function() {
             this.menu.popup(gui.getCurrentWindow(), e.originalEvent.x, e.originalEvent.y);
         }
     }
-    var newNotebookListMenuSys = new newNotebookListMenu();
+
+    const newNotebookListMenuSys = new newNotebookListMenu();
 
     // 清空回收站
     function newClearTrashMenu() {
 
-        var me = this;
+        const me = this;
         this.menu = new gui.Menu();
         this.clear = new gui.MenuItem({
             label: 'Clear trash',
@@ -1358,7 +1366,7 @@ Notebook.init = function() {
     $("#notebookList").on("click", ".notebook-setting", function(e) {
         e.preventDefault();
         e.stopPropagation();
-        var $p = $(this).parent();
+        const $p = $(this).parent();
         newNotebookListMenuSys.popup(e, $p);
     });
     $("#notebookList").on('contextmenu', 'li a', function(e) {
@@ -1371,7 +1379,7 @@ Notebook.init = function() {
     $("#notebookListForSearch").on("click", ".notebook-setting", function(e) {
         e.preventDefault();
         e.stopPropagation();
-        var $p = $(this).parent();
+        const $p = $(this).parent();
         newNotebookListMenuSys.popup(e, $p, true);
     });
 };

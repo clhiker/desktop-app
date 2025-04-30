@@ -215,8 +215,8 @@ function openIt() {
     //     }
     // );
     let mainWindow = new BrowserWindow({
-        width: 1050,
-        height: 595,
+        width: 1200,
+        height: 720,
         frame: process.platform !== 'darwin',
         transparent: false,
         autoHideMenuBar: true,

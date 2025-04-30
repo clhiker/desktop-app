@@ -5,9 +5,9 @@
  * 注意, fs.existsSync总返回false, readFileSync可用
  */
 define(function() {
-    var async; // = require('async');
+    let async; // = require('async');
 
-    var exportPDF = {
+    return {
         langs: {
             'en-us': {
                 'export': 'Export PDF',
@@ -40,8 +40,8 @@ define(function() {
         },
 
         _inited: false,
-        init: function() {
-            var me = this;
+        init: function () {
+            const me = this;
             if (me._inited) {
                 return;
             }
@@ -53,11 +53,11 @@ define(function() {
         // 调用main导出pdf
         _exportPdfSeq: 1,
         _exportPdfCallback: {},
-        _initExportPdf: function() {
-            var me = this;
+        _initExportPdf: function () {
+            const me = this;
             // console.log('_initExportPdf');
-            Api.ipc.on('export-pdf-ret', function(event, arg) {
-                var seq = arg.seq;
+            Api.ipc.on('export-pdf-ret', function (event, arg) {
+                const seq = arg.seq;
                 // console.log('export-pdf-ret');
                 // console.log(arg);
                 // console.log(me._exportPdfCallback[seq]);
@@ -66,48 +66,53 @@ define(function() {
                 }
             });
         },
-        exportPdf: function(htmlPath, targetPdfPath, isMarkdown, callback) {
+        exportPdf: function (htmlPath, targetPdfPath, isMarkdown, callback) {
             this._exportPdfSeq++;
             this._exportPdfCallback[this._exportPdfSeq] = callback;
-            Api.ipc.send('export-pdf', { htmlPath: htmlPath, targetPdfPath: targetPdfPath, isMarkdown: isMarkdown, seq: this._exportPdfSeq });
+            Api.ipc.send('export-pdf', {
+                htmlPath: htmlPath,
+                targetPdfPath: targetPdfPath,
+                isMarkdown: isMarkdown,
+                seq: this._exportPdfSeq
+            });
         },
 
-        getPluginPath: function() {
+        getPluginPath: function () {
             return Api.evtService.getProjectBasePath() + '/public/plugins/export_pdf';
         },
 
         htmlTpl: '',
         markdownTpl: '',
-        getTpl: function(isMarkdown) {
-            var tpl = isMarkdown ? this.markdownTpl : this.htmlTpl;
+        getTpl: function (isMarkdown) {
+            let tpl = isMarkdown ? this.markdownTpl : this.htmlTpl;
             if (tpl) {
                 return tpl;
             }
-            var basePluginPath = this.getPluginPath();
+            const basePluginPath = this.getPluginPath();
 
-            var tplName = isMarkdown ? 'markdown' : 'html';
-            var tplPath = basePluginPath + '/tpl/' + tplName + '.tpl';
+            const tplName = isMarkdown ? 'markdown' : 'html';
+            const tplPath = basePluginPath + '/tpl/' + tplName + '.tpl';
             tpl = Api.NodeFs.readFileSync(tplPath, 'utf-8');
             isMarkdown ? (this.markdownTpl = tpl) : (this.htmlTpl = tpl);
             return tpl;
         },
         // 生成html或markdown
-        render: function(note) {
-            var tpl = this.getTpl(note.IsMarkdown);
-            var title = note.Title || getMsg('Untitled');
+        render: function (note) {
+            let tpl = this.getTpl(note.IsMarkdown);
+            const title = note.Title || getMsg('Untitled');
             tpl = tpl.replace(/\{title\}/g, title);
-            tpl = tpl.replace("{content}", function() {
+            tpl = tpl.replace("{content}", function () {
                 return note.Content; // 为什么要这样? 因为 $$ 替换后变成了一个!!
             });
             return tpl;
         },
 
-        replaceAll: function(src, pattern, to) {
+        replaceAll: function (src, pattern, to) {
             if (!src) {
                 return src;
             }
             while (true) {
-                var oldSrc = src;
+                const oldSrc = src;
                 src = src.replace(pattern, to);
                 if (oldSrc === src) {
                     return src;
@@ -115,31 +120,31 @@ define(function() {
             }
         },
 
-        fixFilename: function(filename) {
-            var reg = new RegExp("/|#|\\$|!|\\^|\\*|'| |\"|%|&|\\(|\\)|\\+|\\,|/|:|;|<|>|=|\\?|@|\\||\\\\", 'g');
+        fixFilename: function (filename) {
+            const reg = new RegExp("[/#$!^*\' \"%&()+,:;<>=?@|\\\\]", 'g');
             filename = filename.replace(reg, "-");
             // 防止出现两个连续的-
-            while (filename.indexOf('--') != -1) {
+            while (filename.indexOf('--') !== -1) {
                 filename = this.replaceAll(filename, '--', '-');
             }
             if (filename.length > 1) {
                 // 最后一个-
-                filename = filename.replace(/\-$/, '');
+                filename = filename.replace(/-$/, '');
             }
             return filename;
         },
 
         // 得到可用的文件名, 避免冲突
-        getPdfFilePath: function(pathInfo, n, cb) {
-            var me = this;
+        getPdfFilePath: function (pathInfo, n, cb) {
+            const me = this;
             if (n > 1) {
                 pathInfo.nameNotExt = pathInfo.nameNotExtRaw + '-' + n;
             }
-            var absPath = pathInfo.getFullPath();
+            const absPath = pathInfo.getFullPath();
 
             // Api.NodeFs.existsSync(absPath) 总是返回false, 不知道什么原因
             // 在控制台上是可以的
-            Api.NodeFs.exists(absPath, function(exists) {
+            Api.NodeFs.exists(absPath, function (exists) {
                 if (!exists) {
                     cb(absPath);
                 } else {
@@ -148,17 +153,17 @@ define(function() {
             });
         },
 
-        getTargetPath: function(callback) {
+        getTargetPath: function (callback) {
             // showSaveDialog 不支持property选择文件夹
-            var po = Api.gui.dialog.showOpenDialog(Api.gui.getCurrentWindow(), {
+            const po = Api.gui.dialog.showOpenDialog(Api.gui.getCurrentWindow(), {
                 defaultPath: Api.getDefaultPath(),
                 properties: ['openDirectory']
             });
-            if (typeof(po) != "object") {
+            if (typeof (po) !== "object") {
                 return;
             }
 
-            po.then(function(re) {
+            po.then(function (re) {
                 if (re.canceled !== false || re.filePaths.length < 1) {
                     return callback();
                 }
@@ -169,13 +174,46 @@ define(function() {
 
         loadingIsClosed: false,
 
-        exportPDFForNotebook: function(notebookId) {
-            var me = this;
+        exportPDFForNotebook: function (notebookId) {
+            const me = this;
             if (!notebookId) {
                 return;
             }
-            me.getTargetPath(function(targetPath) {
+
+            // 创建一个内部函数来处理目录选择和检查
+            function tryExport(targetPath) {
                 if (!targetPath) {
+                    return;
+                }
+
+                // 直接获取笔记本信息
+                let notebook = Api.notebook.getNotebook(notebookId);
+                // 创建以笔记本名称命名的子文件夹
+                let notebookName = me.fixFilename(notebook.Title);
+                let newPath = targetPath + '/' + notebookName;
+
+                // 检查目标路径是否存在同名文件或文件夹
+                try {
+                    if (Api.NodeFs.existsSync(newPath)) {
+                        // 弹出警告对话框
+                        Api.gui.dialog.showMessageBoxSync(Api.gui.getCurrentWindow(), {
+                            type: 'warning',
+                            buttons: ['确定'],
+                            title: '警告',
+                            message: '目录 "' + notebookName + '" 已存在，请选择其他目录保存。'
+                        });
+                        // 重新调用getTargetPath让用户选择新目录
+                        me.getTargetPath(function (newTargetPath) {
+                            tryExport(newTargetPath);
+                        });
+                        return;
+                    }
+
+                    // 创建新目录
+                    Api.NodeFs.mkdirSync(newPath);
+                    targetPath = newPath;
+                } catch (e) {
+                    console.error(e);
                     return;
                 }
 
@@ -183,24 +221,66 @@ define(function() {
                 Api.loading.show(Api.getMsg('plugin.export_pdf.Exporting'), {
                     hasProgress: true,
                     isLarge: true,
-                    onClose: function() {
+                    onClose: function () {
                         me.loadingIsClosed = true;
-                        setTimeout(function() {
+                        setTimeout(function () {
                             me.hideLoading();
                         });
                     }
                 });
                 Api.loading.setProgress(1);
 
-                Api.noteService.getNotes(notebookId, function(notes) {
-                    if (!notes) {
-                        me.hideLoading();
-                        return;
-                    }
+                // 递归处理笔记本及其子笔记本
+                function processNotebook(notebookId, currentPath) {
+                    return new Promise((resolve) => {
+                        let allNotes = [];
+                        let currentNotebook = Api.notebook.getNotebook(notebookId);
 
-                    var total = notes.length;
-                    var i = 0;
-                    async.eachSeries(notes, function(note, cb) {
+                        // 获取当前笔记本的所有笔记
+                        Api.noteService.getNotes(notebookId, function (notes) {
+                            if (notes) {
+                                allNotes = allNotes.concat(notes);
+                            }
+
+                            // 获取子笔记本
+                            let children = Api.notebook.getSubNotebooks(notebookId);
+                            if (!children || children.length === 0) {
+                                resolve({notes: allNotes, total: allNotes.length});
+                                return;
+                            }
+
+                            // 处理每个子笔记本
+                            let processed = 0;
+                            children.forEach(function (child) {
+                                // 为子笔记本创建文件夹
+                                let childPath = currentPath + '/' + me.fixFilename(child.Title);
+                                try {
+                                    if (!Api.NodeFs.existsSync(childPath)) {
+                                        Api.NodeFs.mkdirSync(childPath);
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                    return;
+                                }
+
+                                // 递归处理子笔记本
+                                processNotebook(child.NotebookId, childPath).then(function (result) {
+                                    allNotes = allNotes.concat(result.notes);
+                                    processed++;
+                                    if (processed === children.length) {
+                                        resolve({notes: allNotes, total: allNotes.length});
+                                    }
+                                });
+                            });
+                        });
+                    });
+                }
+
+                // 开始处理整个笔记本树
+                processNotebook(notebookId, targetPath).then(function (result) {
+                    const total = result.notes.length;
+                    let i = 0;
+                    async.eachSeries(result.notes, function (note, cb) {
                         if (me.loadingIsClosed) {
                             cb();
                             me.hideLoading();
@@ -208,29 +288,50 @@ define(function() {
                         }
                         i++;
                         Api.loading.setProgress(100 * i / total);
-                        me._exportPDF(note, targetPath, function() {
+
+                        // 确定笔记保存的路径
+                        let noteNotebook = Api.notebook.getNotebook(note.NotebookId);
+                        let notePath = targetPath;
+                        if (noteNotebook.NotebookId !== notebookId) {
+                            // 构建完整的路径
+                            let path = [];
+                            let current = noteNotebook;
+                            while (current && current.NotebookId !== notebookId) {
+                                path.unshift(me.fixFilename(current.Title));
+                                // 使用 ParentNotebookId 获取父笔记本
+                                current = Api.notebook.getNotebook(current.ParentNotebookId);
+                            }
+                            notePath = targetPath + '/' + path.join('/');
+                        }
+
+                        me._exportPDF(note, notePath, function () {
                             cb();
                         }, i, total);
-                    }, function() {
+                    }, function () {
                         me.hideLoading();
-                        Notify.show({ title: 'Info', body: getMsg('plugin.export_pdf.exportSuccess') });
+                        Notify.show({title: 'Info', body: getMsg('plugin.export_pdf.exportSuccess')});
                     });
                 });
+            }
+
+            // 初始调用
+            me.getTargetPath(function (targetPath) {
+                tryExport(targetPath);
             });
         },
 
-        hideLoading: function() {
-            setTimeout(function() {
+        hideLoading: function () {
+            setTimeout(function () {
                 Api.loading.hide();
             }, 1000);
         },
 
-        exportPDF: function(noteIds) {
-            var me = this;
-            if (!noteIds || noteIds.length == 0) {
+        exportPDF: function (noteIds) {
+            const me = this;
+            if (!noteIds || noteIds.length === 0) {
                 return;
             }
-            me.getTargetPath(function(targetPath) {
+            me.getTargetPath(function (targetPath) {
                 if (!targetPath) {
                     return;
                 }
@@ -239,19 +340,19 @@ define(function() {
                 Api.loading.show(Api.getMsg('plugin.export_pdf.Exporting'), {
                     hasProgress: true,
                     isLarge: true,
-                    onClose: function() {
+                    onClose: function () {
                         me.loadingIsClosed = true;
-                        setTimeout(function() {
+                        setTimeout(function () {
                             me.hideLoading();
                         });
                     }
                 });
                 Api.loading.setProgress(1);
 
-                var i = 0;
-                var total = noteIds.length;
+                let i = 0;
+                const total = noteIds.length;
 
-                async.eachSeries(noteIds, function(noteId, cb) {
+                async.eachSeries(noteIds, function (noteId, cb) {
                     if (me.loadingIsClosed) {
                         cb();
                         return;
@@ -259,29 +360,22 @@ define(function() {
 
                     i++;
                     Api.loading.setProgress(100 * i / total);
-                    Api.noteService.getNote(noteId, function(note) {
+                    Api.noteService.getNote(noteId, function (note) {
 
-                        me._exportPDF(note, targetPath, function(ok) {
+                        me._exportPDF(note, targetPath, function (ok) {
                             cb();
                         }, i, total);
                     });
 
-                }, function() {
+                }, function () {
                     me.hideLoading();
-                    Notify.show({ title: 'Info', body: getMsg('plugin.export_pdf.exportSuccess') });
+                    Notify.show({title: 'Info', body: getMsg('plugin.export_pdf.exportSuccess')});
                 });
             });
         },
 
-        _exportPDF: function(note, path, callback, i, total) {
-            var me = this;
-            setTimeout(function() {
-                me._exportPDF(note, path, callback, i, total);
-            }, 1000);
-        },
-
-        _exportPDF: function(note, path, callback, i, total) {
-            var me = this;
+        _exportPDF: function (note, path, callback, i, total) {
+            const me = this;
             if (!note) {
                 return;
             }
@@ -291,36 +385,36 @@ define(function() {
                 return;
             }
 
-            setTimeout(function() {
+            setTimeout(function () {
                 Api.loading.setMsg(Api.getMsg('plugin.export_pdf.Exporting: ') + (note.Title || getMsg('Untitled')));
                 Api.loading.setProgressRate(i + '/' + total);
             }, 100);
 
-            var name = note.Title ? note.Title + '.pdf' : getMsg('Untitled') + '.pdf';
+            let name = note.Title ? note.Title + '.pdf' : getMsg('Untitled') + '.pdf';
             name = me.fixFilename(name);
 
-            var targetPath = path + Api.commonService.getPathSep() + name;
+            const targetPath = path + Api.commonService.getPathSep() + name;
 
             // 将路径和名字区分开
-            var pathInfo = Api.commonService.splitFile(targetPath);
+            const pathInfo = Api.commonService.splitFile(targetPath);
             pathInfo.nameNotExt = me.fixFilename(pathInfo.nameNotExt); // 重新修正一次
-            var nameNotExt = pathInfo.nameNotExt;
+            const nameNotExt = pathInfo.nameNotExt;
             pathInfo.nameNotExtRaw = pathInfo.nameNotExt;
 
             // 得到可用文件的绝对路径
-            me.getPdfFilePath(pathInfo, 1, function(absPdfFilePath) {
+            me.getPdfFilePath(pathInfo, 1, function (absPdfFilePath) {
                 // 得到存放assets的目录
-                var html = me.render(note);
-                var tempPath = Api.gui.app.getPath('temp');
-                var last = tempPath[tempPath.length - 1];
-                if (last == '/' || last == '\\') {
+                const html = me.render(note);
+                let tempPath = Api.gui.app.getPath('temp');
+                const last = tempPath[tempPath.length - 1];
+                if (last === '/' || last === '\\') {
                     tempPath = tempPath.substr(0, tempPath.length - 1);
                 }
-                var targetHtmlPath = tempPath + '/' + (new Date().getTime()) + '.html';
+                const targetHtmlPath = tempPath + '/' + (new Date().getTime()) + '.html';
 
                 // 把html文件写到tmp目录
                 Api.commonService.writeFile(targetHtmlPath, html);
-                me.exportPdf(targetHtmlPath, absPdfFilePath, note.IsMarkdown, function(args) {
+                me.exportPdf(targetHtmlPath, absPdfFilePath, note.IsMarkdown, function (args) {
                     // console.log('export pdf ret');
                     callback(args.ok);
                 });
@@ -328,17 +422,17 @@ define(function() {
         },
 
         // 打开前要执行的
-        onOpen: function() {
-            var me = this;
-            var gui = Api.gui;
+        onOpen: function () {
+            const me = this;
+            const gui = Api.gui;
 
-            var menu = {
+            const menu = {
                 label: Api.getMsg('plugin.export_pdf.export'),
-                enabled: function(noteIds) {
+                enabled: function (noteIds) {
                     return true;
                 },
-                click: (function() {
-                    return function(noteIds) {
+                click: (function () {
+                    return function (noteIds) {
                         me.init();
                         me.exportPDF(noteIds);
                     }
@@ -348,11 +442,11 @@ define(function() {
 
             Api.addExportMenuForNotebook({
                 label: Api.getMsg('plugin.export_pdf.export'),
-                enabled: function(notebookId) {
+                enabled: function (notebookId) {
                     return true;
                 },
-                click: (function() {
-                    return function(notebookId) {
+                click: (function () {
+                    return function (notebookId) {
                         me.init();
                         me.exportPDFForNotebook(notebookId);
                     }
@@ -360,11 +454,11 @@ define(function() {
             });
         },
         // 打开后
-        onOpenAfter: function() {},
+        onOpenAfter: function () {
+        },
         // 关闭时需要运行的
-        onClose: function() {}
+        onClose: function () {
+        }
     };
-
-    return exportPDF;
 
 });
